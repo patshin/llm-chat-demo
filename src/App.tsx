@@ -263,7 +263,7 @@ function GroupConcentrationScene() {
 function GroupOverviewStep({ onAskVanke }: { onAskVanke: () => void }) {
   const [tab, setTab] = useState<GroupTab>('general');
   const data = tab === 'general' ? generalEnterpriseGroups : financialInstitutionGroups;
-  const title = tab === 'general' ? '一般企业集团集中度额度占用情况' : '金融机构集团集中度额度占用情况';
+  const title = tab === 'general' ? '一般企业集团限额占用情况' : '金融机构集团限额占用情况';
 
   return (
     <section className="scenario-card">
@@ -1712,30 +1712,57 @@ function RiskStatusBadge({ status, large }: { status: RiskStatus; large?: boolea
   return <span className={`risk-badge status-${status} ${large ? 'large' : ''}`}>{status}</span>;
 }
 
+function getLimitUsageStatus(limitUsage: number): RiskStatus {
+  if (limitUsage > 100) return '超限';
+  if (limitUsage > 90) return '预警';
+  return '正常';
+}
+
 function HorizontalBarChart({
   data,
 }: {
-  data: Array<{ name: string; exposure: number; concentration: number; status: RiskStatus }>;
+  data: Array<{ name: string; limit: number; limitUsage: number }>;
 }) {
-  const max = Math.max(...data.map((item) => item.exposure));
-
   return (
     <div className="horizontal-chart">
-      <div className="horizontal-chart-legend" aria-label="集中度状态图例">
-        <span className="legend-pill status-超限">超限</span>
-        <span className="legend-pill status-预警">预警</span>
-        <span className="legend-pill status-正常">正常</span>
+      <div className="horizontal-chart-legend" aria-label="限额占用率状态图例">
+        <span><i className="legend-dot status-超限" />超限（&gt;100%）</span>
+        <span><i className="legend-dot status-预警" />预警（90%~100%）</span>
+        <span><i className="legend-dot status-正常" />正常（≤90%）</span>
       </div>
-      {data.map((item) => (
-        <div className="horizontal-row" key={item.name}>
-          <div className="h-label">{item.name}</div>
-          <div className="h-track">
-            <div className={`h-bar status-${item.status}`} style={{ width: `${(item.exposure / max) * 100}%` }} />
-          </div>
-          <div className="h-value">{item.exposure}</div>
-          <div className="h-concentration">集中度 {item.concentration.toFixed(1)}%</div>
+      <div className="horizontal-table" role="table" aria-label="集团限额占用情况">
+        <div className="horizontal-row horizontal-head" role="row">
+          <div role="columnheader">排名</div>
+          <div role="columnheader">交易对手</div>
+          <div role="columnheader">限额（亿元）</div>
+          <div role="columnheader">限额占用率</div>
+          <div role="columnheader">状态</div>
         </div>
-      ))}
+        {data.map((item, index) => {
+          const status = getLimitUsageStatus(item.limitUsage);
+          const barWidth = Math.min(item.limitUsage, 100);
+
+          return (
+            <div className="horizontal-row" role="row" key={item.name}>
+              <div className={`h-rank status-${status}`} role="cell">{index + 1}</div>
+              <div className="h-label" role="cell">{item.name}</div>
+              <div className="h-value" role="cell">{item.limit}</div>
+              <div className="h-usage" role="cell">
+                <div className="h-track" aria-hidden="true">
+                  <div className={`h-bar status-${status}`} style={{ width: `${barWidth}%` }} />
+                </div>
+                <span className={`h-percent status-${status}`}>{item.limitUsage.toFixed(1)}%</span>
+              </div>
+              <div className="h-status" role="cell">
+                <span className={`risk-badge status-${status}`}>{status}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="horizontal-chart-note">
+        注：限额占用率 = 当前占用 / 授信限额 × 100%；超限：&gt;100%，预警：90%~100%，正常：≤90%。
+      </p>
     </div>
   );
 }
@@ -2163,7 +2190,6 @@ function RatingSummaryCard() {
   return (
     <div className="rating-summary-card">
       <div className="rating-subject">
-        <div className="rating-subject-icon">楼</div>
         <div>
           <div className="rating-subject-title">
             <h2>{ratingEntitySummary.name}</h2>
@@ -2192,19 +2218,19 @@ function RatingSummaryCard() {
       <div className="rating-summary">
         <h3>评级摘要</h3>
         <div className="rating-summary-grid">
-          <div>
+          <div className="rating-summary-item">
             <span>最高内部信评</span>
-            <strong>{ratingEntitySummary.highestInternalRating}</strong>
+            <strong className="rating-summary-value">{ratingEntitySummary.highestInternalRating}</strong>
           </div>
-          <div>
+          <div className="rating-summary-item">
             <span>最低内部信评</span>
-            <strong>{ratingEntitySummary.lowestInternalRating}</strong>
+            <strong className="rating-summary-value">{ratingEntitySummary.lowestInternalRating}</strong>
           </div>
-          <div>
+          <div className="rating-summary-item rating-summary-item-wide">
             <span>最新外部评级</span>
-            <strong>{ratingEntitySummary.latestExternalAgency} {ratingEntitySummary.latestExternalRating}</strong>
-            <em>评级展望：{ratingEntitySummary.latestExternalOutlook}</em>
-            <em>最近评级日期：{ratingEntitySummary.latestExternalDate}</em>
+            <strong className="rating-summary-rating">{ratingEntitySummary.latestExternalAgency} {ratingEntitySummary.latestExternalRating}</strong>
+            <div className="rating-summary-subline">评级展望：{ratingEntitySummary.latestExternalOutlook}</div>
+            <div className="rating-summary-subline">最近评级日期：{ratingEntitySummary.latestExternalDate}</div>
           </div>
         </div>
       </div>
@@ -2215,8 +2241,17 @@ function RatingSummaryCard() {
 function InternalRatingPanel() {
   return (
     <div className="rating-panel">
-      <InternalRatingTrendChart />
-      <InternalRatingHistoryTable />
+      <div className="rating-workspace">
+        <div className="rating-main-column">
+          <InternalRatingTrendChart />
+          <InternalRatingHistoryTable />
+        </div>
+        <div className="assistant-card rating-tip-card">
+          <p className="answer-copy">
+            折线图展示历史最近6次评级更新结果，并且“各成员公司评级”仅在“非重点关注”公司时才展示
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2413,9 +2448,13 @@ function WarningTrendPanel() {
           <span>单位：亿元</span>
         </div>
       </div>
-      <WarningStackedChart data={warningInsuranceTrendData} labelKey="month" max={140} showTrendLine />
+      <WarningStackedChart data={warningInsuranceTrendData} labelKey="month" max={220} />
     </div>
   );
+}
+
+function formatAmount(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
 function WarningDimensionPanel() {
@@ -2423,11 +2462,11 @@ function WarningDimensionPanel() {
     <div className="warning-panel">
       <div className="analysis-heading">
         <div>
-          <h2>按平安成员公司分布</h2>
-          <span>单位：亿元</span>
+          <h2>预警出险成员公司分布</h2>
+          <span>按成员公司展示当前预警出险金额，条形长度表示合计金额，颜色表示风险类型。</span>
         </div>
       </div>
-      <WarningStackedChart data={warningInsuranceMemberDistribution} labelKey="member" max={230} />
+      <WarningMemberBarChart data={warningInsuranceMemberDistribution} max={250} totalAmount={520} />
     </div>
   );
 }
@@ -2444,11 +2483,12 @@ function WarningStackedChart({
   showTrendLine?: boolean;
 }) {
   const segments = [
-    { key: 'major', label: '重大预警', color: '#ef4444' },
-    { key: 'second', label: '二级预警', color: '#f97316' },
+    { key: 'defaulted', label: '出险', color: '#6d4fd8' },
     { key: 'first', label: '一级预警', color: '#fbbf24' },
-    { key: 'defaulted', label: '出险', color: '#6b7280' },
+    { key: 'second', label: '二级预警', color: '#f97316' },
+    { key: 'major', label: '重大预警', color: '#ef4444' },
   ];
+  const yTicks = [0, 40, 80, 120, 160];
   const trendPoints = data.map((item, index) => {
     const total = Number(item.total);
     const x = ((index + 0.5) / data.length) * 100;
@@ -2474,6 +2514,18 @@ function WarningStackedChart({
         )}
       </div>
       <div className="warning-stacked-bars">
+        <div className="warning-y-axis" aria-hidden="true">
+          {yTicks.map((tick) => (
+            <span key={tick} style={{ bottom: `${(tick / max) * 100}%` }}>
+              {tick}
+            </span>
+          ))}
+        </div>
+        <div className="warning-grid-lines" aria-hidden="true">
+          {yTicks.map((tick) => (
+            <i key={tick} style={{ bottom: `${(tick / max) * 100}%` }} />
+          ))}
+        </div>
         {showTrendLine && (
           <svg className="warning-trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <polyline points={trendPolyline} />
@@ -2517,6 +2569,96 @@ function WarningStackedChart({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function WarningMemberBarChart({
+  data,
+  max,
+  totalAmount,
+}: {
+  data: Array<Record<string, string | number>>;
+  max: number;
+  totalAmount: number;
+}) {
+  const segments = [
+    { key: 'defaulted', label: '出险', color: '#6d4fd8' },
+    { key: 'first', label: '一级预警', color: '#fbbf24' },
+    { key: 'second', label: '二级预警', color: '#f97316' },
+    { key: 'major', label: '重大预警', color: '#ef4444' },
+  ];
+  const ticks = [0, 50, 100, 150, 200, 250];
+  const rows = [...data].sort((a, b) => Number(b.total) - Number(a.total));
+
+  return (
+    <div className="warning-chart-card warning-member-chart-card">
+      <div className="warning-legend warning-member-legend">
+        {segments.map((segment) => (
+          <span key={segment.key}>
+            <i style={{ background: segment.color }} />
+            {segment.label}
+          </span>
+        ))}
+      </div>
+      <div className="warning-member-chart">
+        <div className="warning-member-header">
+          <span />
+          <span />
+          <strong>合计金额（亿元）</strong>
+          <strong>占比</strong>
+        </div>
+        <div className="warning-member-plot">
+          <div className="warning-member-grid" aria-hidden="true">
+            {ticks.map((tick) => (
+              <i key={tick} style={{ left: `${(tick / max) * 100}%` }} />
+            ))}
+          </div>
+          {rows.map((item) => {
+            const total = Number(item.total);
+            const width = (total / max) * 100;
+            const ratio = ((total / totalAmount) * 100).toFixed(2);
+
+            return (
+              <div className="warning-member-row" key={String(item.member)}>
+                <div className="warning-member-name">{item.member}</div>
+                <div className="warning-member-track">
+                  <div className="warning-member-stack" style={{ width: `${width}%` }}>
+                    {segments.map((segment) => {
+                      const value = Number(item[segment.key]);
+
+                      return (
+                        <div
+                          key={segment.key}
+                          style={{
+                            width: `${(value / total) * 100}%`,
+                            background: segment.color,
+                          }}
+                        >
+                          {value >= 3 ? <span>{formatAmount(value)}</span> : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="warning-member-total">{formatAmount(total)} 亿</div>
+                <div className="warning-member-ratio">{ratio}%</div>
+              </div>
+            );
+          })}
+          <div className="warning-member-axis">
+            <span />
+            <div>
+              {ticks.map((tick) => (
+                <em key={tick} style={{ left: `${(tick / max) * 100}%` }}>
+                  {tick}
+                </em>
+              ))}
+            </div>
+          </div>
+          <div className="warning-member-unit">金额（亿元）</div>
+        </div>
       </div>
     </div>
   );

@@ -1,21 +1,21 @@
 export type RiskStatus = '正常' | '预警' | '超限';
 
 export const generalEnterpriseGroups = [
-  { name: '万科集团', exposure: 650, concentration: 78.6, status: '预警' as RiskStatus },
-  { name: '龙湖集团', exposure: 180, concentration: 62.3, status: '预警' as RiskStatus },
-  { name: '保利发展', exposure: 150, concentration: 55.2, status: '正常' as RiskStatus },
-  { name: '招商蛇口', exposure: 120, concentration: 48.1, status: '正常' as RiskStatus },
-  { name: '华润置地', exposure: 95, concentration: 38.6, status: '正常' as RiskStatus },
-  { name: '绿城中国', exposure: 75, concentration: 32.4, status: '正常' as RiskStatus },
+  { name: '万科集团', limit: 650, limitUsage: 102.3 },
+  { name: '龙湖集团', limit: 180, limitUsage: 92.1 },
+  { name: '保利发展', limit: 150, limitUsage: 75.6 },
+  { name: '招商蛇口', limit: 120, limitUsage: 68.4 },
+  { name: '华润置地', limit: 95, limitUsage: 53.7 },
+  { name: '绿城中国', limit: 75, limitUsage: 41.2 },
 ];
 
 export const financialInstitutionGroups = [
-  { name: '平安集团', exposure: 420, concentration: 64.5, status: '预警' as RiskStatus },
-  { name: '中信集团', exposure: 360, concentration: 58.2, status: '正常' as RiskStatus },
-  { name: '招商局集团', exposure: 300, concentration: 52.7, status: '正常' as RiskStatus },
-  { name: '光大集团', exposure: 220, concentration: 43.1, status: '正常' as RiskStatus },
-  { name: '国寿集团', exposure: 180, concentration: 36.8, status: '正常' as RiskStatus },
-  { name: '华泰证券', exposure: 120, concentration: 28.9, status: '正常' as RiskStatus },
+  { name: '平安集团', limit: 420, limitUsage: 96.5 },
+  { name: '中信集团', limit: 360, limitUsage: 82.4 },
+  { name: '招商局集团', limit: 300, limitUsage: 78.6 },
+  { name: '光大集团', limit: 220, limitUsage: 65.2 },
+  { name: '国寿集团', limit: 180, limitUsage: 58.9 },
+  { name: '华泰证券', limit: 120, limitUsage: 42.7 },
 ];
 
 export const vankeTrendData = [
@@ -269,12 +269,12 @@ export const warningInsuranceOverview = {
 };
 
 export const warningInsuranceTrendData = [
-  { month: '2025-06', major: 12, second: 20, first: 25, defaulted: 15, total: 72 },
-  { month: '2025-07', major: 15, second: 22, first: 30, defaulted: 19, total: 86 },
-  { month: '2025-08', major: 18, second: 24, first: 34, defaulted: 19, total: 95 },
-  { month: '2025-09', major: 20, second: 28, first: 32, defaulted: 18, total: 98 },
-  { month: '2025-10', major: 26, second: 30, first: 40, defaulted: 16, total: 112 },
-  { month: '2025-11', major: 30, second: 35, first: 42, defaulted: 20, total: 127 },
+  { month: '2025-01', major: 22, second: 42, first: 95, defaulted: 20, total: 179 },
+  { month: '2025-02', major: 24, second: 45, first: 103, defaulted: 20, total: 192 },
+  { month: '2025-03', major: 26, second: 48, first: 107, defaulted: 20, total: 201 },
+  { month: '2025-04', major: 25, second: 47, first: 106, defaulted: 20, total: 198 },
+  { month: '2025-05', major: 24, second: 46, first: 105, defaulted: 20, total: 195 },
+  { month: '2025-06', major: 30, second: 50, first: 117.82, defaulted: 20, total: 217.82 },
 ];
 
 export const warningInsuranceMemberDistribution = [
