@@ -6,9 +6,11 @@ import {
   Eraser,
   HelpCircle,
   MessageSquarePlus,
+  Monitor,
   Paperclip,
   Send,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   User,
   X,
@@ -57,6 +59,7 @@ import {
 } from './mockData';
 
 type MainTab = 'overview' | 'details';
+type ViewMode = 'desktop' | 'mobile';
 type SceneKey =
   | 'group'
   | 'counterparty'
@@ -104,6 +107,48 @@ type NameListItem = {
 };
 
 function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
+
+  return (
+    <>
+      <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+      {viewMode === 'desktop' ? <DesktopView /> : <MobileApp />}
+    </>
+  );
+}
+
+function ViewModeToggle({
+  viewMode,
+  onViewModeChange,
+}: {
+  viewMode: ViewMode;
+  onViewModeChange: (viewMode: ViewMode) => void;
+}) {
+  return (
+    <div className="view-mode-toggle" aria-label="展示模式切换">
+      <button
+        className={viewMode === 'desktop' ? 'active' : ''}
+        type="button"
+        onClick={() => onViewModeChange('desktop')}
+        aria-pressed={viewMode === 'desktop'}
+      >
+        <Monitor size={15} />
+        电脑端
+      </button>
+      <button
+        className={viewMode === 'mobile' ? 'active' : ''}
+        type="button"
+        onClick={() => onViewModeChange('mobile')}
+        aria-pressed={viewMode === 'mobile'}
+      >
+        <Smartphone size={15} />
+        移动端
+      </button>
+    </div>
+  );
+}
+
+function DesktopView() {
   const [scene, setScene] = useState<SceneKey>('singleLarge');
   const stepTwoRef = useRef<HTMLElement>(null);
   const scrollToStepTwo = () => stepTwoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -126,6 +171,40 @@ function App() {
         {scene === 'singleLarge' && <SingleLargeCustomerView />}
         {['badAssets', 'market', 'liquidity'].includes(scene) && <LargeCustomerOverviewView />}
       </main>
+    </div>
+  );
+}
+
+function MobileApp() {
+  return (
+    <div className="mobile-demo-shell">
+      <section className="mobile-demo-frame" aria-label="移动端占位页面">
+        <div className="mobile-status-bar">
+          <span>9:41</span>
+          <span>5G</span>
+        </div>
+        <div className="mobile-demo-header">
+          <div className="mobile-demo-icon">
+            <ShieldCheck size={24} />
+          </div>
+          <div>
+            <h1>移动端风控助手</h1>
+            <p>Mobile Demo Placeholder</p>
+          </div>
+        </div>
+        <div className="mobile-placeholder-card">
+          <p className="mobile-eyebrow">展示模式已切换</p>
+          <h2>移动端占位页面</h2>
+          <p>
+            当前 issue 仅搭建移动端展示入口，后续可在这里承载移动端对话、指标和分析卡片。
+          </p>
+        </div>
+        <div className="mobile-placeholder-list">
+          <span />
+          <span />
+          <span />
+        </div>
+      </section>
     </div>
   );
 }
