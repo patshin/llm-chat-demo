@@ -42,11 +42,20 @@ export const vankeMemberCompanyData = [
   { name: '基金', value: 25 },
 ];
 
+export const vankeMemberCompanyComparisonData = [
+  { name: '银行', previous: 210, current: 260 },
+  { name: '寿险', previous: 130, current: 155 },
+  { name: '证券', previous: 75, current: 95 },
+  { name: '资管', previous: 50, current: 70 },
+  { name: '信托', previous: 30, current: 45 },
+  { name: '基金', previous: 15, current: 25 },
+];
+
 export const vankeMetrics = [
-  { title: '已占用额度', value: '650', unit: '亿元', change: '较上月 +6.23%' },
-  { title: '当前集中度', value: '78.6%', unit: '', change: '较上月 +3.2pct' },
+  { title: '已占用额度', value: '650', unit: '亿元', change: '较上月 +xx亿元' },
+  { title: '限额占用比例', value: '78.6%', unit: '', change: '较上月 +3.2%' },
   { title: '统一信评', value: '2C', unit: '', change: '' },
-  { title: '风险状态', value: '预警', unit: '', change: '', badge: true },
+  { title: '集中度限额占用预警', value: '预警', unit: '', change: '', badge: true },
 ];
 
 export type NameListType = '黑名单' | '灰名单' | '白名单' | '白名单*';
@@ -152,7 +161,10 @@ export const entityHitResult = {
   reason: '该客户存在违约或负面舆情',
   date: '2024-12-29',
   reporter: '寿险',
-  suggestion: '限制新增交易，核查当前存量持仓及授信占用',
+  suggestion: `分级固定展示：
+黑名单：禁止主动新增业务，存量业务进入清收处置流程
+灰名单：暂定主动新增业务，强化存量业务监控并择机退出
+白名单*：暂停主动新增业务，强化存量业务监控并择机退出`,
 };
 
 export const ratingEntitySummary = {
@@ -190,12 +202,12 @@ export const internalRatingHistory = [
 ];
 
 export const internalAnnualRatingRecords = [
-  { company: '中国平安人寿保险股份有限公司', rating: 'AAA', reportYear: 2025 },
-  { company: '中国平安财产保险股份有限公司', rating: 'AA+', reportYear: 2025 },
-  { company: '平安银行股份有限公司', rating: 'AA+', reportYear: 2025 },
-  { company: '平安信托有限责任公司', rating: 'AAA', reportYear: 2024 },
-  { company: '平安证券股份有限公司', rating: 'AA+', reportYear: 2025 },
-  { company: '平安基金管理有限公司', rating: 'AA', reportYear: 2025 },
+  { company: '中国平安人寿保险股份有限公司', rating: '4B', reportYear: 2025, effectiveDate: '2025-11-24' },
+  { company: '中国平安财产保险股份有限公司', rating: '4A', reportYear: 2025, effectiveDate: '2025-11-24' },
+  { company: '平安银行股份有限公司', rating: '4A', reportYear: 2025, effectiveDate: '2025-11-24' },
+  { company: '平安信托有限责任公司', rating: '4B', reportYear: 2024, effectiveDate: '2024-11-24' },
+  { company: '平安证券股份有限公司', rating: '4A', reportYear: 2025, effectiveDate: '2025-11-24' },
+  { company: '平安基金管理有限公司', rating: '3D', reportYear: 2025, effectiveDate: '2025-11-24' },
 ];
 
 export const externalRatingAgencies = [
@@ -341,7 +353,17 @@ export const vankeRiskDrilldown = [
         amount: 12,
         ratio: '40.0%',
         subsidiaries: [
-          { name: '万科服务有限公司', amount: 5, ratio: '41.7%', reason: '现金流压力上升' },
+          {
+            name: '万科（重庆）企业有限公司',
+            amount: 5,
+            ratio: '41.7%',
+            reason: '现金流压力上升',
+            company: '万科（重庆）企业有限公司',
+            projectName: '平安-万科重庆台等你不动产债券投资计划',
+            warningStartTime: '2025-01-01',
+            memberCompany: '寿险',
+            businessType: '非标',
+          },
           { name: '万科地产华南有限公司', amount: 4, ratio: '33.3%', reason: '销售回款下降' },
           { name: '万科物业发展有限公司', amount: 3, ratio: '25.0%', reason: '负面舆情增加' },
         ],

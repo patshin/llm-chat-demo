@@ -3,13 +3,10 @@ import {
   Bot,
   CalendarDays,
   ChevronDown,
-  Download,
   Eraser,
   HelpCircle,
   MessageSquarePlus,
   Paperclip,
-  RotateCcw,
-  Search,
   Send,
   ShieldCheck,
   Sparkles,
@@ -48,7 +45,7 @@ import {
   singleLargeCustomerWarningCompanyDistribution,
   singleLargeCustomerWarningEvents,
   singleLargeCustomerWarningMetrics,
-  vankeMemberCompanyData,
+  vankeMemberCompanyComparisonData,
   vankeMetrics,
   vankeRiskDrilldown,
   vankeTrendData,
@@ -78,6 +75,19 @@ type LargeCustomerTab = 'trend' | 'dimension';
 type SingleLargeCustomerTab = 'holding' | 'warning' | 'rating' | 'sentiment' | 'namelist';
 type HoldingDimension = 'company' | 'asset';
 type HoldingView = 'chart' | 'table';
+type LargeCustomerSortKey = 'exposure' | 'momChange' | 'ytdChange';
+type SortDirection = 'asc' | 'desc';
+type WarningSubsidiaryRow = {
+  name?: string;
+  amount?: number;
+  ratio?: string;
+  reason?: string;
+  company?: string;
+  projectName?: string;
+  warningStartTime?: string;
+  memberCompany?: string;
+  businessType?: string;
+};
 type SingleWarningView = 'summary' | 'member';
 type SingleWarningMode = 'chart' | 'table';
 type SentimentRiskFilter = 'all' | 'high' | 'medium';
@@ -181,10 +191,10 @@ function BlacklistQueryView({ onAskEntity }: { onAskEntity: () => void }) {
           <UserBubble>帮我看一下万科集团当前黑灰白名单情况</UserBubble>
           <AssistantMessage>
             <p className="assistant-text">
-              当前名单库共收录主体 <strong>155 个</strong>，其中 <strong>黑名单 55 个</strong>、
-              <strong>灰名单 70 个</strong>、<strong>白名单* 30 个</strong>。黑名单主体主要集中在地产、
-              城投及部分高风险企业，建议重点关注 <strong>已命中黑名单</strong> 且仍存在
-              <strong> 持仓敞口</strong> 的交易对手。
+              截至2026-06-25，万科集团共有 <strong>155 个法人主体</strong>纳入黑名单管控，其中涉及
+              <strong>黑名单 55 个</strong>、<strong>灰名单 70 个</strong>、<strong>白名单* 30 个</strong>。
+              其中，黑名单客户主要因违约、重大负面舆情、司法执行等原因入库，灰名单客户主要因为外部评级展望调整为负面、
+              存在短期偿债压力等原因入库。（分析由AI生成）
             </p>
           </AssistantMessage>
 
@@ -263,7 +273,7 @@ function GroupConcentrationScene() {
 function GroupOverviewStep({ onAskVanke }: { onAskVanke: () => void }) {
   const [tab, setTab] = useState<GroupTab>('general');
   const data = tab === 'general' ? generalEnterpriseGroups : financialInstitutionGroups;
-  const title = tab === 'general' ? '一般企业集团限额占用情况' : '金融机构集团限额占用情况';
+  const title = tab === 'general' ? '一般企业集团前20大集中度限额管控情况' : '金融机构集团前20大集中度限额管控情况';
 
   return (
     <section className="scenario-card">
@@ -276,8 +286,11 @@ function GroupOverviewStep({ onAskVanke }: { onAskVanke: () => void }) {
           <UserBubble>帮我看一下集团集中度风险情况</UserBubble>
           <AssistantMessage>
             <p className="assistant-text">
-              截至 <strong>2025-05-31</strong>，当前查询到 <strong>2 户</strong> 超限集团，<strong>1 户</strong> 预警集团。
-              当日新增超限 <strong>1 户</strong>，新增预警 <strong>0 户</strong>。建议持续关注超限集团的规模变化及后续风险迁移情况。
+              截至 <strong>2025-05-31</strong>，一般企业集团 <strong>2 户超限</strong>：华夏幸福，已占用额度为 <strong>xxx 亿</strong>，
+              较年初下降 <strong>xxx 亿</strong>，限额占用比例 <strong>xx%</strong>。
+              金融机构集团 <strong>1 户超限</strong>：汇丰控股，已占用额度 <strong>xxx 亿</strong>，较年初下降 <strong>xxx 亿</strong>，
+              限额占用比例 <strong>xx%</strong>；万科集团，已占用额度为 <strong>xxx 亿</strong>，较年初增加 <strong>xxx 亿</strong>，
+              限额占用比例 <strong>xx%</strong>。
             </p>
           </AssistantMessage>
           <section className="analysis-card group-analysis-card">
@@ -294,7 +307,6 @@ function GroupOverviewStep({ onAskVanke }: { onAskVanke: () => void }) {
                 <div>
                   <h2>{title}</h2>
                 </div>
-                <span className="unit-label">单位：亿元</span>
               </div>
               <HorizontalBarChart data={data} />
             </div>
@@ -321,7 +333,7 @@ function VankeConcentrationStep({ refTarget }: { refTarget: RefObject<HTMLElemen
             <p className="assistant-text">
               <strong>万科集团</strong> 当前集中度限额为 <strong>800 亿元</strong>，已占用额度
               <strong> 650 亿元</strong>，限额占用率 <strong>78.6%</strong>，建议重点关注 <strong>银行</strong>、
-              <strong>寿险</strong> 等成员公司的敞口变化。
+              <strong>寿险</strong> 等成员公司的敞口变化，本段由AI生成，描述下哪个成员公司占比大/哪个近期新增敞口最多。
             </p>
             <MetricGrid metrics={vankeMetrics} />
           </AssistantMessage>
@@ -343,7 +355,7 @@ function VankeConcentrationStep({ refTarget }: { refTarget: RefObject<HTMLElemen
                     <h2>万科集团在各成员公司的持仓分布（当前）</h2>
                     <span className="unit-label">单位：亿元</span>
                   </div>
-                  <VerticalBarChart data={vankeMemberCompanyData.map((item) => ({ label: item.name, value: item.value }))} max={290} />
+                  <VankeMemberComparisonChart data={vankeMemberCompanyComparisonData} max={290} />
                 </>
               )}
             </div>
@@ -353,6 +365,48 @@ function VankeConcentrationStep({ refTarget }: { refTarget: RefObject<HTMLElemen
       <ChatInput />
       <div className="disclaimer">内容由大模型生成，仅供参考</div>
     </section>
+  );
+}
+
+function VankeMemberComparisonChart({
+  data,
+  max,
+}: {
+  data: Array<{ name: string; previous: number; current: number }>;
+  max: number;
+}) {
+  return (
+    <div className="bar-chart member-chart vanke-comparison-chart">
+      <div className="comparison-legend">
+        <span><i className="legend-current" />2025-05 持仓额度</span>
+        <span><i className="legend-previous" />2024-12 持仓额度</span>
+      </div>
+      <div className="grid-lines" />
+      <div className="bars comparison-bars">
+        {data.map((item) => {
+          const previousHeight = Math.max((item.previous / max) * 100, item.previous ? 4 : 0);
+          const currentHeight = Math.max((item.current / max) * 100, item.current ? 4 : 0);
+
+          return (
+            <div className="bar-item comparison-bar-item" key={item.name}>
+              <div className="bar-track comparison-bar-track">
+                <div className="comparison-series">
+                  <div className="comparison-bar-wrap previous" style={{ '--bar-height': `${previousHeight}%` } as CSSProperties}>
+                    <div className="bar-value">{item.previous.toFixed(2)}</div>
+                    <div className="comparison-bar previous" />
+                  </div>
+                  <div className="comparison-bar-wrap current" style={{ '--bar-height': `${currentHeight}%` } as CSSProperties}>
+                    <div className="bar-value">{item.current.toFixed(2)}</div>
+                    <div className="comparison-bar current" />
+                  </div>
+                </div>
+              </div>
+              <div className="bar-label">{item.name}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -395,14 +449,6 @@ function CounterpartyHoldingScene() {
   );
 }
 
-const largeCustomerMetrics = [
-  { title: '总持仓规模', value: '285.53', unit: '亿元', change: '较上月 +12.80 亿元', subChange: '较年初 +4.70%' },
-  { title: '最大专业公司散口', value: '137.01', unit: '亿元', change: '银行, 占比 48.01%' },
-  { title: '出险预警金额', value: '217.82', unit: '亿元', change: '' },
-  { title: '黑灰名单客户（户）', value: '87382', unit: '', change: '较上月末 +130 户' },
-  { title: '最新评级（内部）', value: '7A', unit: '', change: '2025-06-20' },
-];
-
 function LargeCustomerOverviewView() {
   const [tab, setTab] = useState<LargeCustomerTab>('trend');
 
@@ -420,11 +466,6 @@ function LargeCustomerOverviewView() {
               <strong>重点管理大户 126 家</strong>，持仓规模 <strong>1,871.36 亿元</strong>，占比
               <strong> 56.96%</strong>。建议持续关注高敞口且伴随预警、出险、黑灰名单或评级承压的大户客户。
             </p>
-            <div className="metric-grid large-metric-grid">
-              {largeCustomerMetrics.map((metric) => (
-                <LargeCustomerMetricCard key={metric.title} {...metric} />
-              ))}
-            </div>
           </AssistantMessage>
           <section className="analysis-card group-analysis-card large-analysis-card">
             <div className="tabs">
@@ -492,16 +533,19 @@ function LargeCustomerTrendPanel() {
 }
 
 function LargeCustomerDimensionPanel() {
+  const [groupSearch, setGroupSearch] = useState('');
+  const tableRows = largeCustomerTableData.filter((item) => item.name.includes(groupSearch.trim()));
+
   return (
     <div className="large-panel">
-      <LargeCustomerFilterBar mode="dimension" />
+      <LargeCustomerFilterBar mode="dimension" groupSearch={groupSearch} onGroupSearchChange={setGroupSearch} />
       <div className="analysis-heading large-table-heading">
         <div>
           <h2>大户客户明细</h2>
           <span>默认管理分类：重点管理</span>
         </div>
       </div>
-      <LargeCustomerTable />
+      <LargeCustomerTable rows={tableRows} />
     </div>
   );
 }
@@ -510,14 +554,22 @@ function LargeCustomerFilterBar({
   mode,
   keyOnly,
   onKeyOnlyChange,
+  groupSearch,
+  onGroupSearchChange,
 }: {
   mode: 'trend' | 'dimension';
   keyOnly?: boolean;
   onKeyOnlyChange?: (checked: boolean) => void;
+  groupSearch?: string;
+  onGroupSearchChange?: (value: string) => void;
 }) {
   return (
     <div className="large-filter-card">
-      <FilterSelect label="集团名称" defaultValue="全部" options={mode === 'trend' ? ['全部', '万科企业集团', '华侨城集团', '龙湖集团'] : ['全部', '万科企业集团', '华侨城集团', '龙湖集团', '中国中铁股份有限公司', '碧桂园控股有限公司']} />
+      {mode === 'dimension' ? (
+        <GroupNameSearchField value={groupSearch ?? ''} onChange={onGroupSearchChange} />
+      ) : (
+        <FilterSelect label="集团名称" defaultValue="全部" options={['全部', '万科企业集团', '华侨城集团', '龙湖集团']} />
+      )}
       <FilterSelect label="企业性质" defaultValue="全部" options={['全部', '地方国企', '外企', '外资', '央企', '民企', '混合', '金融机构']} />
       <FilterSelect label="管理分类" defaultValue={mode === 'dimension' ? '重点管理' : '全部'} options={['全部', '重点管理', '常态管理', '出险']} />
       <div className="filter-field date-field">
@@ -537,21 +589,22 @@ function LargeCustomerFilterBar({
           仅看重点管理
         </label>
       )}
-      <div className="filter-actions">
-        <button className="primary-filter-btn">
-          <Search size={14} />
-          查询
-        </button>
-        <button className="plain-filter-btn">
-          <RotateCcw size={14} />
-          重置
-        </button>
-        {mode === 'dimension' && (
-          <button className="plain-filter-btn">
-            <Download size={14} />
-            导出
-          </button>
-        )}
+    </div>
+  );
+}
+
+function GroupNameSearchField({ value, onChange }: { value: string; onChange?: (value: string) => void }) {
+  return (
+    <div className="filter-field group-search-field">
+      <label>集团名称</label>
+      <div className="filter-search-input">
+        <input
+          type="search"
+          value={value}
+          onChange={(event) => onChange?.(event.target.value)}
+          placeholder="输入集团名称模糊检索"
+          aria-label="集团名称"
+        />
       </div>
     </div>
   );
@@ -607,21 +660,6 @@ function LargeCustomerTrendChart({
             <stop offset="100%" stopColor="#ffb36c" />
           </linearGradient>
         </defs>
-        {[0, 1, 2, 3, 4].map((tick) => {
-          const y = padding.top + (plotHeight / 4) * tick;
-          const countLabel = Math.round(countMax - (countMax / 4) * tick);
-          const exposureLabel = Math.round(exposureMax - (exposureMax / 4) * tick).toLocaleString('zh-CN');
-          return (
-            <g key={tick}>
-              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} className="grid-line" />
-              <text x={padding.left - 18} y={y + 4} textAnchor="end" className="svg-axis">{countLabel}</text>
-              <text x={width - padding.right - 6} y={y + 4} textAnchor="end" className="svg-axis">{exposureLabel}</text>
-            </g>
-          );
-        })}
-        <line x1={padding.left} x2={width - padding.right} y1={baselineY} y2={baselineY} className="grid-line" />
-        <text x={padding.left - 34} y={padding.top - 16} className="svg-axis">大户数量（家）</text>
-        <text x={width - padding.right - 8} y={padding.top - 16} textAnchor="end" className="svg-axis">持仓规模（亿元）</text>
         {data.map((item, index) => {
           const x = padding.left + step * index + step / 2 - barWidth / 2;
           const barHeight = (item.customerCount / countMax) * plotHeight;
@@ -653,9 +691,51 @@ function LargeCustomerTrendChart({
   );
 }
 
-function LargeCustomerTable() {
+function LargeCustomerTable({ rows: sourceRows = largeCustomerTableData }: { rows?: typeof largeCustomerTableData }) {
+  const [sortConfig, setSortConfig] = useState<{ key: LargeCustomerSortKey; direction: SortDirection }>({
+    key: 'exposure',
+    direction: 'desc',
+  });
   const formatChange = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(2)}`;
-  const rows = [...largeCustomerTableData].sort((a, b) => b.exposure - a.exposure);
+  const summary = sourceRows.reduce(
+    (total, item) => ({
+      count: total.count + 1,
+      exposure: total.exposure + item.exposure,
+      momChange: total.momChange + item.momChange,
+      ytdChange: total.ytdChange + item.ytdChange,
+    }),
+    { count: 0, exposure: 0, momChange: 0, ytdChange: 0 },
+  );
+  const rows = sourceRows
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const directionFactor = sortConfig.direction === 'desc' ? -1 : 1;
+      const diff = a.item[sortConfig.key] - b.item[sortConfig.key];
+
+      return diff === 0 ? a.index - b.index : diff * directionFactor;
+    })
+    .map(({ item }) => item);
+  const handleSort = (key: LargeCustomerSortKey) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+    }));
+  };
+  const renderSortableHeader = (key: LargeCustomerSortKey, label: string) => {
+    const active = sortConfig.key === key;
+
+    return (
+      <button
+        type="button"
+        className={`sortable-header ${active ? 'active' : ''}`}
+        onClick={() => handleSort(key)}
+        aria-sort={active ? (sortConfig.direction === 'desc' ? 'descending' : 'ascending') : 'none'}
+      >
+        <span>{label}</span>
+        {active && <span className="sort-arrow">{sortConfig.direction === 'desc' ? '↓' : '↑'}</span>}
+      </button>
+    );
+  };
 
   return (
     <div className="large-table-card">
@@ -666,12 +746,20 @@ function LargeCustomerTable() {
               <th>企业名称</th>
               <th>企业性质</th>
               <th>管理分类</th>
-              <th>持仓规模（亿元）</th>
-              <th>较上月（亿元）</th>
-              <th>较年初（亿元）</th>
+              <th>{renderSortableHeader('exposure', '持仓规模（亿元）')}</th>
+              <th>{renderSortableHeader('momChange', '较上月（亿元）')}</th>
+              <th>{renderSortableHeader('ytdChange', '较年初（亿元）')}</th>
             </tr>
           </thead>
           <tbody>
+            <tr className="large-summary-row">
+              <td>当前筛选合计</td>
+              <td>-</td>
+              <td>-</td>
+              <td className="num-cell summary-number">{summary.exposure.toFixed(2)}</td>
+              <td className={`num-cell summary-number ${summary.momChange >= 0 ? 'up' : 'down'}`}>{formatChange(summary.momChange)}</td>
+              <td className={`num-cell summary-number ${summary.ytdChange >= 0 ? 'up' : 'down'}`}>{formatChange(summary.ytdChange)}</td>
+            </tr>
             {rows.map((item) => (
               <tr key={item.name}>
                 <td>{item.name}</td>
@@ -974,7 +1062,7 @@ function SingleRatingTab() {
       <p className="sub-summary">
         <strong>深圳华侨城股份有限公司</strong>当前<strong>内部信评</strong>最高为 <strong>3B</strong>，
         最低为 <strong>3D</strong>；最新<strong>外部评级</strong>为 <strong>大公国际 AAA</strong>，
-        整体外部评级处于较高水平。外部评级整体较稳定，但内部统一信评低于外部评级表现，
+        整体外部评级处于较高水平。（可模版/由AI生成）外部评级整体较稳定，但内部统一信评低于外部评级表现，
         建议关注集团内部口径下的信用风险变化。
       </p>
       <div className="analysis-card rating-analysis single-rating-analysis">
@@ -1427,7 +1515,7 @@ function SingleSubsidiaryBreakdownTable({
 }: {
   risk: string;
   member: string;
-  subsidiaries: ReadonlyArray<{ name: string; amount: number }>;
+  subsidiaries: ReadonlyArray<WarningSubsidiaryRow>;
 }) {
   return (
     <div className="subsidiary-table-wrap">
@@ -1437,17 +1525,27 @@ function SingleSubsidiaryBreakdownTable({
       <table className="data-table subsidiary-table">
         <thead>
           <tr>
-            <th>万科子公司</th>
-            <th>金额（亿元）</th>
+            <th>公司</th>
+            <th>项目名称</th>
+            <th>预警发起时间</th>
+            <th>成员公司</th>
+            <th>业务类型</th>
           </tr>
         </thead>
         <tbody>
-          {subsidiaries.map((item) => (
-            <tr key={`${member}-${item.name}`}>
-              <td>{item.name}</td>
-              <td className="num-cell">{item.amount}</td>
-            </tr>
-          ))}
+          {subsidiaries.map((item) => {
+            const row = getWarningSubsidiaryDisplayRow(item, member);
+
+            return (
+              <tr key={`${member}-${row.company}-${row.projectName}`}>
+                <td>{row.company}</td>
+                <td>{row.projectName}</td>
+                <td>{row.warningStartTime}</td>
+                <td>{row.memberCompany}</td>
+                <td>{row.businessType}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -1726,42 +1824,40 @@ function HorizontalBarChart({
   return (
     <div className="horizontal-chart">
       <div className="horizontal-chart-legend" aria-label="限额占用率状态图例">
-        <span><i className="legend-dot status-超限" />超限（&gt;100%）</span>
-        <span><i className="legend-dot status-预警" />预警（90%~100%）</span>
-        <span><i className="legend-dot status-正常" />正常（≤90%）</span>
+        <span><i className="legend-dot status-超限" />超限</span>
+        <span><i className="legend-dot status-预警" />预警</span>
+        <span><i className="legend-dot status-正常" />正常</span>
       </div>
       <div className="horizontal-table" role="table" aria-label="集团限额占用情况">
         <div className="horizontal-row horizontal-head" role="row">
           <div role="columnheader">排名</div>
           <div role="columnheader">交易对手</div>
-          <div role="columnheader">限额（亿元）</div>
+          <div role="columnheader">限额占用（亿元）</div>
           <div role="columnheader">限额占用率</div>
-          <div role="columnheader">状态</div>
         </div>
         {data.map((item, index) => {
           const status = getLimitUsageStatus(item.limitUsage);
           const barWidth = Math.min(item.limitUsage, 100);
+          const rankTone = index === 0 ? 'top' : index === 1 ? 'second' : 'normal';
 
           return (
             <div className="horizontal-row" role="row" key={item.name}>
-              <div className={`h-rank status-${status}`} role="cell">{index + 1}</div>
+              <div className={`h-rank rank-${rankTone}`} role="cell">{index + 1}</div>
               <div className="h-label" role="cell">{item.name}</div>
-              <div className="h-value" role="cell">{item.limit}</div>
               <div className="h-usage" role="cell">
                 <div className="h-track" aria-hidden="true">
-                  <div className={`h-bar status-${status}`} style={{ width: `${barWidth}%` }} />
+                  <div className={`h-bar status-${status}`} style={{ width: `${barWidth}%` }}>
+                    <span className="h-value">{item.limit}</span>
+                  </div>
                 </div>
-                <span className={`h-percent status-${status}`}>{item.limitUsage.toFixed(1)}%</span>
               </div>
-              <div className="h-status" role="cell">
-                <span className={`risk-badge status-${status}`}>{status}</span>
-              </div>
+              <div className={`h-percent status-${status}`} role="cell">{item.limitUsage.toFixed(1)}%</div>
             </div>
           );
         })}
       </div>
       <p className="horizontal-chart-note">
-        注：限额占用率 = 当前占用 / 授信限额 × 100%；超限：&gt;100%，预警：90%~100%，正常：≤90%。
+        注：限额占用比例 = 已用规模 / 限额；超限：&gt;100%，预警：90%~100%，正常：≤90%。
       </p>
     </div>
   );
@@ -1774,7 +1870,7 @@ function CounterpartyTrendAnalysis() {
     <>
       <div className="analysis-heading">
         <div>
-          <h2>交易对手持仓规模趋势（近6个月）</h2>
+          <h2>万科持仓规模</h2>
           <span>单位：亿元</span>
         </div>
         <div className="toggle-group">
@@ -1990,7 +2086,8 @@ function ComboTrendChart() {
   const minPct = 60;
   const maxPct = 90;
   const step = innerWidth / vankeTrendData.length;
-  const barWidth = 18;
+  const barWidth = 30;
+  const exposureTopLabels = [520, 535, 560, 585, 610, 625, 640, 660, 675, 690, 705, 720];
   const point = (index: number, pct: number) => ({
     x: padding.left + step * index + step / 2,
     y: padding.top + ((maxPct - pct) / (maxPct - minPct)) * innerHeight,
@@ -2006,36 +2103,18 @@ function ComboTrendChart() {
   return (
     <div>
       <div className="analysis-heading">
-        <h2>近一年持仓规模与集中度趋势</h2>
+        <h2>万科集团集中度限额占用趋势</h2>
       </div>
       <div className="combo-legend">
         <span><i className="legend-bar" />已占用额度（亿元）</span>
-        <span><i className="legend-line" />集中度（%）</span>
+        <span><i className="legend-line" />限额占用比例（%）</span>
         <span><i className="legend-dash" />阈值（90%）</span>
       </div>
       <div className="combo-chart">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="近一年持仓规模与集中度趋势">
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="万科集团集中度限额占用趋势">
           {[0, 1, 2, 3, 4].map((tick) => {
             const y = padding.top + (innerHeight / 4) * tick;
             return <line key={tick} x1={padding.left} x2={width - padding.right} y1={y} y2={y} className="grid-line" />;
-          })}
-          {[0, 1, 2, 3, 4].map((tick) => {
-            const y = padding.top + (innerHeight / 4) * tick;
-            const pctLabel = maxPct - (maxPct - minPct) * (tick / 4);
-            return (
-              <text key={`pct-${tick}`} x={padding.left - 10} y={y + 4} textAnchor="end" className="svg-axis">
-                {pctLabel.toFixed(0)}%
-              </text>
-            );
-          })}
-          {[0, 1, 2, 3, 4].map((tick) => {
-            const y = padding.top + (innerHeight / 4) * tick;
-            const exposureLabel = maxExposure - (maxExposure - minExposure) * (tick / 4);
-            return (
-              <text key={`exposure-${tick}`} x={width - padding.right + 10} y={y + 4} textAnchor="start" className="svg-axis">
-                {Math.round(exposureLabel)}
-              </text>
-            );
           })}
           <line x1={padding.left} x2={width - padding.right} y1={thresholdY} y2={thresholdY} className="threshold-line" />
           {vankeTrendData.map((item, index) => {
@@ -2045,7 +2124,10 @@ function ComboTrendChart() {
             return (
               <g key={item.month}>
                 <rect className="combo-bar" x={x} y={y} width={barWidth} height={barHeight} rx="4" />
-              <text x={x + barWidth / 2} y={padding.top + innerHeight + 26} textAnchor="middle" className="svg-axis">
+                <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" className="bar-top-label">
+                  {exposureTopLabels[index]}
+                </text>
+                <text x={x + barWidth / 2} y={padding.top + innerHeight + 26} textAnchor="middle" className="svg-axis">
                   {item.month}
                 </text>
               </g>
@@ -2055,6 +2137,21 @@ function ComboTrendChart() {
           {vankeTrendData.map((item, index) => {
             const p = point(index, item.concentration);
             return <circle key={item.month} cx={p.x} cy={p.y} r="4" className="line-dot" />;
+          })}
+          {vankeTrendData.map((item, index) => {
+            const p = point(index, item.concentration);
+            return (
+              <text
+                key={`label-${item.month}`}
+                x={p.x}
+                y={p.y + 20}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="concentration-label"
+              >
+                {Math.round(item.concentration)}%
+              </text>
+            );
           })}
           <text x={padding.left + 6} y={thresholdY - 8} textAnchor="start" className="svg-axis">
             90%
@@ -2068,16 +2165,11 @@ function ComboTrendChart() {
 function NameListOverview() {
   return (
     <div className="name-overview">
-      <p className="sub-summary">
-        名单整体分布显示，灰名单主体数量最多，为 <strong>70 个</strong>；黑名单主体 <strong>55 个</strong>，
-        主要来自高风险行业和出现负面风险信号的交易对手；白名单*主体 <strong>30 个</strong>，
-        可作为低风险参考对象。
-      </p>
       <div className="overview-grid">
         <div>
           <div className="analysis-heading">
             <div>
-              <h2>黑灰白名单*主体数量分布</h2>
+              <h2>黑灰名单法人数量分布</h2>
             </div>
             <span className="unit-label">单位：个</span>
           </div>
@@ -2102,11 +2194,6 @@ function NameListDetails() {
 
   return (
     <div>
-      <p className="sub-summary">
-        以下为当前万科集团各法人公司黑灰白名单明细汇总。黑名单主体共 <strong>55 个</strong>，主要因违约、重大负面舆情、
-        司法执行等原因入库；灰名单主体共 <strong>70 个</strong>，主要为观察类或待进一步核验主体；
-        白名单*主体共 <strong>30 个</strong>，可作为低风险参考对象。
-      </p>
       <div className="accordion-stack">
         {groups.map((group) => (
           <NameListAccordionTable
@@ -2156,7 +2243,7 @@ function RatingQueryView() {
             <p className="answer-copy">
               <strong>深圳华侨城股份有限公司</strong>当前<strong>内部信评</strong>最高为 <strong>3B</strong>，
               最低为 <strong>3D</strong>；最新<strong>外部评级</strong>为
-              <strong> 大公国际 AAA</strong>，整体外部评级处于较高水平。外部评级整体较稳定，但内部统一信评低于外部评级表现，
+              <strong> 大公国际 AAA</strong>，整体外部评级处于较高水平。（可模版/由AI生成）外部评级整体较稳定，但内部统一信评低于外部评级表现，
               建议关注集团内部口径下的信用风险变化。
             </p>
           </AssistantMessage>
@@ -2193,7 +2280,7 @@ function RatingSummaryCard() {
         <div>
           <div className="rating-subject-title">
             <h2>{ratingEntitySummary.name}</h2>
-            <span className="attention-tag">重点关注</span>
+            <span className="attention-tag">重点客户</span>
           </div>
           <dl>
             <div>
@@ -2201,16 +2288,8 @@ function RatingSummaryCard() {
               <dd>{ratingEntitySummary.group}</dd>
             </div>
             <div>
-              <dt>主体类型</dt>
-              <dd>{ratingEntitySummary.subjectType}</dd>
-            </div>
-            <div>
               <dt>行业</dt>
               <dd>{ratingEntitySummary.industry}</dd>
-            </div>
-            <div>
-              <dt>更新时间</dt>
-              <dd>{ratingEntitySummary.updatedAt}</dd>
             </div>
           </dl>
         </div>
@@ -2219,12 +2298,8 @@ function RatingSummaryCard() {
         <h3>评级摘要</h3>
         <div className="rating-summary-grid">
           <div className="rating-summary-item">
-            <span>最高内部信评</span>
+            <span>内部评级</span>
             <strong className="rating-summary-value">{ratingEntitySummary.highestInternalRating}</strong>
-          </div>
-          <div className="rating-summary-item">
-            <span>最低内部信评</span>
-            <strong className="rating-summary-value">{ratingEntitySummary.lowestInternalRating}</strong>
           </div>
           <div className="rating-summary-item rating-summary-item-wide">
             <span>最新外部评级</span>
@@ -2241,62 +2316,13 @@ function RatingSummaryCard() {
 function InternalRatingPanel() {
   return (
     <div className="rating-panel">
-      <div className="rating-workspace">
-        <div className="rating-main-column">
-          <InternalRatingTrendChart />
-          <InternalRatingHistoryTable />
-        </div>
-        <div className="assistant-card rating-tip-card">
-          <p className="answer-copy">
-            折线图展示历史最近6次评级更新结果，并且“各成员公司评级”仅在“非重点关注”公司时才展示
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InternalRatingTrendChart() {
-  const labels = ['1A', '2A', '2B', '2C', '3A', '3B', '3C', '3D', '4A'];
-  const width = 720;
-  const height = 250;
-  const padding = { top: 24, right: 32, bottom: 38, left: 46 };
-  const plotWidth = width - padding.left - padding.right;
-  const plotHeight = height - padding.top - padding.bottom;
-  const points = internalRatingTrendData.map((item, index) => {
-    const x = padding.left + (plotWidth / (internalRatingTrendData.length - 1)) * index;
-    const y = padding.top + ((item.value - 1) / (labels.length - 1)) * plotHeight;
-    return { ...item, x, y };
-  });
-  const line = points.map((point) => `${point.x},${point.y}`).join(' ');
-
-  return (
-    <div className="rating-line-card">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="内部统一信评迁徙趋势">
-        {labels.map((label, index) => {
-          const y = padding.top + (plotHeight / (labels.length - 1)) * index;
-          return (
-            <g key={label}>
-              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="#e5e7eb" />
-              <text x={16} y={y + 4} className="axis-text">{label}</text>
-            </g>
-          );
-        })}
-        <polyline points={line} fill="none" stroke="#ff5a00" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        {points.map((point, index) => (
-          <g key={point.date}>
-            <circle className={index === points.length - 1 ? 'latest-rating-point' : ''} cx={point.x} cy={point.y} r="5" />
-            <text x={point.x - 9} y={point.y - 12} className="rating-point-label">{point.rating}</text>
-            <text x={point.x - 22} y={height - 12} className="axis-text">{point.date}</text>
-          </g>
-        ))}
-      </svg>
+      <InternalRatingHistoryTable />
     </div>
   );
 }
 
 function InternalRatingHistoryTable() {
-  const sortedRecords = [...internalAnnualRatingRecords].sort((a, b) => b.reportYear - a.reportYear);
+  const sortedRecords = [...internalAnnualRatingRecords].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
 
   return (
     <div className="table-wrap rating-history">
@@ -2307,14 +2333,16 @@ function InternalRatingHistoryTable() {
             <th>专业公司</th>
             <th>有效评级</th>
             <th>评级年报年份</th>
+            <th>生效日</th>
           </tr>
         </thead>
         <tbody>
           {sortedRecords.map((item) => (
-            <tr key={`${item.company}-${item.reportYear}`}>
+            <tr key={`${item.company}-${item.reportYear}-${item.effectiveDate}`}>
               <td>{item.company}</td>
               <td className="annual-rating-value">{item.rating}</td>
               <td>{item.reportYear}</td>
+              <td>{item.effectiveDate}</td>
             </tr>
           ))}
         </tbody>
@@ -2770,6 +2798,18 @@ function RiskTypeBadge({ label }: { label: string }) {
   return <span className={`risk-type-badge badge-${label.replace('金额', '')}`}>{label.replace('金额', '')}</span>;
 }
 
+function getWarningSubsidiaryDisplayRow(item: WarningSubsidiaryRow, member: string) {
+  const company = item.company ?? item.name ?? '-';
+
+  return {
+    company,
+    projectName: item.projectName ?? `${company}风险预警跟踪项目`,
+    warningStartTime: item.warningStartTime ?? '2025-01-01',
+    memberCompany: item.memberCompany ?? member,
+    businessType: item.businessType ?? '非标',
+  };
+}
+
 function SubsidiaryBreakdownTable({
   risk,
   member,
@@ -2777,7 +2817,7 @@ function SubsidiaryBreakdownTable({
 }: {
   risk: string;
   member: string;
-  subsidiaries: Array<{ name: string; amount: number; ratio: string }>;
+  subsidiaries: ReadonlyArray<WarningSubsidiaryRow>;
 }) {
   return (
     <div className="subsidiary-table-wrap">
@@ -2787,17 +2827,27 @@ function SubsidiaryBreakdownTable({
       <table className="data-table subsidiary-table">
         <thead>
           <tr>
-            <th>万科子公司</th>
-            <th>金额（亿元）</th>
+            <th>公司</th>
+            <th>项目名称</th>
+            <th>预警发起时间</th>
+            <th>成员公司</th>
+            <th>业务类型</th>
           </tr>
         </thead>
         <tbody>
-          {subsidiaries.map((item) => (
-            <tr key={item.name}>
-              <td>{item.name}</td>
-              <td>{item.amount}</td>
-            </tr>
-          ))}
+          {subsidiaries.map((item) => {
+            const row = getWarningSubsidiaryDisplayRow(item, member);
+
+            return (
+              <tr key={`${member}-${row.company}-${row.projectName}`}>
+                <td>{row.company}</td>
+                <td>{row.projectName}</td>
+                <td>{row.warningStartTime}</td>
+                <td>{row.memberCompany}</td>
+                <td>{row.businessType}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -2907,7 +2957,7 @@ function EntityRiskDetailTable() {
     ['入库原因', entityHitResult.reason],
     ['入库日期', entityHitResult.date],
     ['上报公司', entityHitResult.reporter],
-    ['风险建议', entityHitResult.suggestion],
+    ['管控策略', entityHitResult.suggestion],
   ];
 
   return (
