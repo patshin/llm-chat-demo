@@ -2516,7 +2516,6 @@ function WarningStackedChart({
     { key: 'second', label: '二级预警', color: '#f97316' },
     { key: 'major', label: '重大预警', color: '#ef4444' },
   ];
-  const yTicks = [0, 40, 80, 120, 160];
   const trendPoints = data.map((item, index) => {
     const total = Number(item.total);
     const x = ((index + 0.5) / data.length) * 100;
@@ -2542,18 +2541,6 @@ function WarningStackedChart({
         )}
       </div>
       <div className="warning-stacked-bars">
-        <div className="warning-y-axis" aria-hidden="true">
-          {yTicks.map((tick) => (
-            <span key={tick} style={{ bottom: `${(tick / max) * 100}%` }}>
-              {tick}
-            </span>
-          ))}
-        </div>
-        <div className="warning-grid-lines" aria-hidden="true">
-          {yTicks.map((tick) => (
-            <i key={tick} style={{ bottom: `${(tick / max) * 100}%` }} />
-          ))}
-        </div>
         {showTrendLine && (
           <svg className="warning-trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <polyline points={trendPolyline} />

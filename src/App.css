@@ -2271,15 +2271,13 @@ button {
 
 .warning-stacked-bars {
   --warning-axis-bottom: 28px;
-  --warning-axis-left: 42px;
   position: relative;
   display: grid;
   grid-template-columns: repeat(6, minmax(54px, 1fr));
   align-items: stretch;
   gap: 30px;
   min-height: 286px;
-  padding: 16px 18px 0 var(--warning-axis-left);
-  border-left: 1px solid #e5e7eb;
+  padding: 16px 18px 0 0;
 }
 
 .warning-chart-card.with-line .warning-total {
@@ -2291,8 +2289,8 @@ button {
   z-index: 4;
   top: 16px;
   right: 18px;
-  left: 18px;
-  width: calc(100% - 36px);
+  left: 0;
+  width: calc(100% - 18px);
   height: calc(100% - var(--warning-axis-bottom) - 16px);
   overflow: visible;
   pointer-events: none;
@@ -2303,56 +2301,9 @@ button {
   z-index: 5;
   top: 16px;
   right: 18px;
-  left: 18px;
+  left: 0;
   height: calc(100% - var(--warning-axis-bottom) - 16px);
   pointer-events: none;
-}
-
-.warning-stacked-bars::after {
-  position: absolute;
-  right: 18px;
-  bottom: var(--warning-axis-bottom);
-  left: var(--warning-axis-left);
-  height: 1px;
-  background: #e5e7eb;
-  content: "";
-  pointer-events: none;
-}
-
-.warning-y-axis {
-  position: absolute;
-  top: 16px;
-  bottom: var(--warning-axis-bottom);
-  left: 0;
-  width: 34px;
-  color: #4b5563;
-  font-size: 12px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-.warning-y-axis span {
-  position: absolute;
-  right: 10px;
-  transform: translateY(50%);
-  line-height: 1;
-}
-
-.warning-grid-lines {
-  position: absolute;
-  top: 16px;
-  right: 18px;
-  bottom: var(--warning-axis-bottom);
-  left: var(--warning-axis-left);
-  pointer-events: none;
-}
-
-.warning-grid-lines i {
-  position: absolute;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: #eef2f7;
 }
 
 .warning-bar-item {
