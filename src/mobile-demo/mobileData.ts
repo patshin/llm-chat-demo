@@ -183,6 +183,286 @@ export const singleLargeWarningDrilldown = [
   },
 ] as const;
 
+export type MobileVankeRiskProjectDetail = {
+  company: string;
+  projectName: string;
+  warningStartDate: string;
+  memberCompany: string;
+  businessType: string;
+  amount: number;
+};
+
+export const mobileVankeRiskProjectDetails = {
+  defaulted: {
+    寿险: [
+      {
+        company: '万科企业股份有限公司',
+        projectName: '万科企业股份有限公司出险项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '债券',
+        amount: 5,
+      },
+      {
+        company: '万科地产上海有限公司',
+        projectName: '万科地产上海有限公司出险项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '非标',
+        amount: 3,
+      },
+    ],
+    银行: [
+      {
+        company: '万科服务有限公司',
+        projectName: '万科服务有限公司出险项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 4,
+      },
+      {
+        company: '万科地产华南有限公司',
+        projectName: '万科地产华南有限公司出险项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 3,
+      },
+    ],
+    信托: [
+      {
+        company: '万科商业管理有限公司',
+        projectName: '万科商业管理有限公司出险项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '信托',
+        businessType: '非标',
+        amount: 5,
+      },
+    ],
+  },
+  major: {
+    银行: [
+      {
+        company: '万科（重庆）企业有限公司',
+        projectName: '平安-万科重庆合等价不动产债券投资计划',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '非标',
+        amount: 5,
+      },
+      {
+        company: '万科地产华南有限公司',
+        projectName: '万科地产华南有限公司风险预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 4,
+      },
+      {
+        company: '万科物业发展有限公司',
+        projectName: '万科物业发展有限公司风险预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 3,
+      },
+    ],
+    寿险: [
+      {
+        company: '万科企业股份有限公司',
+        projectName: '万科企业股份有限公司重大预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '债券',
+        amount: 6,
+      },
+      {
+        company: '万科地产上海有限公司',
+        projectName: '万科地产上海有限公司重大预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '非标',
+        amount: 4,
+      },
+    ],
+    信托: [
+      {
+        company: '万科地产北京有限公司',
+        projectName: '万科地产北京有限公司重大预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '信托',
+        businessType: '非标',
+        amount: 5,
+      },
+      {
+        company: '万科商业管理有限公司',
+        projectName: '万科商业管理有限公司重大预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '信托',
+        businessType: '非标',
+        amount: 3,
+      },
+    ],
+  },
+  second: {
+    银行: [
+      {
+        company: '万科服务有限公司',
+        projectName: '万科服务有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 8,
+      },
+      {
+        company: '万科地产华东有限公司',
+        projectName: '万科地产华东有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 7,
+      },
+      {
+        company: '万科物流发展有限公司',
+        projectName: '万科物流发展有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '债券',
+        amount: 5,
+      },
+    ],
+    寿险: [
+      {
+        company: '万科企业股份有限公司',
+        projectName: '万科企业股份有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '债券',
+        amount: 9,
+      },
+      {
+        company: '万科地产深圳有限公司',
+        projectName: '万科地产深圳有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '非标',
+        amount: 6,
+      },
+    ],
+    证券: [
+      {
+        company: '万科物业服务有限公司',
+        projectName: '万科物业服务有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '证券',
+        businessType: '股票',
+        amount: 6,
+      },
+      {
+        company: '万科城市更新有限公司',
+        projectName: '万科城市更新有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '证券',
+        businessType: '股票',
+        amount: 4,
+      },
+    ],
+    资管: [
+      {
+        company: '万科商业管理有限公司',
+        projectName: '万科商业管理有限公司二级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '资管',
+        businessType: '基金',
+        amount: 5,
+      },
+    ],
+  },
+  first: {
+    银行: [
+      {
+        company: '万科服务有限公司',
+        projectName: '万科服务有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 12,
+      },
+      {
+        company: '万科地产华南有限公司',
+        projectName: '万科地产华南有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 10,
+      },
+      {
+        company: '万科物业发展有限公司',
+        projectName: '万科物业发展有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '银行',
+        businessType: '非标',
+        amount: 8,
+      },
+    ],
+    寿险: [
+      {
+        company: '万科企业股份有限公司',
+        projectName: '万科企业股份有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '债券',
+        amount: 15,
+      },
+      {
+        company: '万科地产上海有限公司',
+        projectName: '万科地产上海有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '寿险',
+        businessType: '非标',
+        amount: 10,
+      },
+    ],
+    证券: [
+      {
+        company: '万科城市更新有限公司',
+        projectName: '万科城市更新有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '证券',
+        businessType: '股票',
+        amount: 9,
+      },
+      {
+        company: '万科物流发展有限公司',
+        projectName: '万科物流发展有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '证券',
+        businessType: '股票',
+        amount: 6,
+      },
+    ],
+    信托: [
+      {
+        company: '万科地产北京有限公司',
+        projectName: '万科地产北京有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '信托',
+        businessType: '非标',
+        amount: 6,
+      },
+      {
+        company: '万科商业管理有限公司',
+        projectName: '万科商业管理有限公司一级预警跟踪项目',
+        warningStartDate: '2025-01-01',
+        memberCompany: '信托',
+        businessType: '非标',
+        amount: 4,
+      },
+    ],
+  },
+} satisfies Record<string, Record<string, MobileVankeRiskProjectDetail[]>>;
+
 export type SentimentRiskLevel = 'high' | 'medium';
 
 export type SentimentFeedItem = {

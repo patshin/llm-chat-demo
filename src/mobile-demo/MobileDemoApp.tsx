@@ -50,6 +50,7 @@ import {
   largeCustomerTableData,
   largeCustomerTrendData,
   memberCompanyHoldingDetails,
+  mobileVankeRiskProjectDetails,
   nameListStats,
   ratingEntitySummary,
   singleLargeCustomerSentimentFeed,
@@ -68,6 +69,7 @@ import {
   whiteListItems,
   type SentimentFeedItem,
   type SentimentRiskLevel,
+  type MobileVankeRiskProjectDetail,
 } from './mobileData';
 
 type ModuleKey =
@@ -120,6 +122,14 @@ type NameListGroupDefinition = {
   title: '黑名单' | '灰名单' | '白名单*';
   items: NameListRecord[];
   level: MobileRiskBadgeLevel;
+};
+type VankeRiskMember = (typeof vankeRiskDrilldown)[number]['members'][number];
+type VankeRiskProjectSheet = {
+  riskKey: string;
+  riskLabel: string;
+  memberName: string;
+  amount: number;
+  records: MobileVankeRiskProjectDetail[];
 };
 
 type Metric = {
@@ -654,21 +664,29 @@ function WarningOverviewModule() {
 }
 
 function WarningVankeDrilldownModule() {
+  const [projectSheet, setProjectSheet] = useState<VankeRiskProjectSheet | null>(null);
+
   return (
     <>
       <MobileSummaryCard conclusion={`${vankeWarningInsuranceSummary.groupName}当前风险金额合计 ${vankeWarningInsuranceSummary.exposure} 亿元，其中重大预警金额 ${vankeWarningInsuranceSummary.majorWarningAmount} 亿元、二级预警金额 ${vankeWarningInsuranceSummary.secondLevelWarningAmount} 亿元、一级预警金额 ${vankeWarningInsuranceSummary.firstLevelWarningAmount} 亿元、出险金额 ${vankeWarningInsuranceSummary.defaultAmount} 亿元。风险主要集中在寿险、银行和信托等成员公司，建议优先查看出险金额和重大预警金额明细。`} />
       <MetricGrid
         metrics={[
-          { label: '风险金额合计', value: String(vankeWarningInsuranceSummary.exposure), unit: '亿元' },
           { label: '重大预警金额', value: String(vankeWarningInsuranceSummary.majorWarningAmount), unit: '亿元' },
           { label: '二级预警金额', value: String(vankeWarningInsuranceSummary.secondLevelWarningAmount), unit: '亿元' },
           { label: '一级预警金额', value: String(vankeWarningInsuranceSummary.firstLevelWarningAmount), unit: '亿元' },
           { label: '出险金额', value: String(vankeWarningInsuranceSummary.defaultAmount), unit: '亿元' },
         ]}
       />
-      <MobileDataCard title="风险类型穿透" meta="展开风险类型后继续展开成员公司">
-        <VankeRiskDrilldownAccordion />
+      <MobileDataCard title="风险类型穿透" meta="展开风险类型后，查看平安成员公司及项目明细">
+        <VankeRiskDrilldownAccordion onOpenMember={setProjectSheet} />
       </MobileDataCard>
+      <MobileBottomSheet
+        open={Boolean(projectSheet)}
+        title={projectSheet ? `${projectSheet.memberName} - ${formatVankeRiskSheetLabel(projectSheet.riskLabel)}明细` : '项目明细'}
+        onClose={() => setProjectSheet(null)}
+      >
+        {projectSheet ? <VankeRiskProjectSheetContent sheet={projectSheet} /> : null}
+      </MobileBottomSheet>
     </>
   );
 }
@@ -988,8 +1006,8 @@ function HoldingOverviewSummary() {
   const topAsset = holdingAssetTypeRows[0];
   const overviewItems = [
     { label: '总持仓规模', value: totalMetric.value, suffix: totalMetric.unit },
-    { label: '最大成员公司', value: `${topCompany.name} ${formatHoldingAmount(topCompany.amount)}`, suffix: '亿元' },
-    { label: '最大资产类型', value: `${topAsset.name} ${formatHoldingAmount(topAsset.amount)}`, suffix: '亿元' },
+    { label: '最大成员公司', value: topCompany.name, suffix: `${formatHoldingAmount(topCompany.amount)} 亿元` },
+    { label: '最大资产类型', value: topAsset.name, suffix: `${formatHoldingAmount(topAsset.amount)} 亿元` },
   ];
 
   return (
@@ -2124,42 +2142,103 @@ function RiskAmountRows({ rows }: { rows: Array<{ label: string; major: number; 
   );
 }
 
-function VankeRiskDrilldownAccordion() {
+function VankeRiskDrilldownAccordion({ onOpenMember }: { onOpenMember: (sheet: VankeRiskProjectSheet) => void }) {
   return (
     <div className="mobile-demo-vanke-risk-accordion">
-      {vankeRiskDrilldown.map((risk, riskIndex) => (
+      {vankeRiskDrilldown.map((risk) => (
         <details className="mobile-demo-vanke-risk-item" key={risk.key} open={risk.key === 'defaulted'}>
           <summary>
             <span className={`mobile-demo-risk-dot risk-${risk.key}`} />
             <strong>{risk.label}</strong>
             <em>{risk.amount} 亿元 / {risk.ratio}</em>
+            <ChevronDown className="mobile-demo-accordion-chevron" size={17} />
           </summary>
           <div className="mobile-demo-vanke-risk-body">
-            {risk.members.map((member, memberIndex) => (
-              <details
-                className="mobile-demo-member-risk-item"
+            {risk.members.map((member) => (
+              <button
+                className="mobile-demo-vanke-member-row"
                 key={`${risk.key}-${member.name}`}
-                open={riskIndex === 0 && memberIndex === 0}
+                type="button"
+                onClick={() => {
+                  onOpenMember({
+                    riskKey: risk.key,
+                    riskLabel: risk.label,
+                    memberName: member.name,
+                    amount: member.amount,
+                    records: getVankeRiskProjectDetails(risk.key, risk.label, member),
+                  });
+                }}
               >
-                <summary>
-                  <span>{member.name}</span>
-                  <strong>{member.amount} 亿元</strong>
-                </summary>
-                <div className="mobile-demo-subsidiary-list">
-                  {member.subsidiaries.map((item) => (
-                    <div className="mobile-demo-subsidiary-row" key={`${member.name}-${item.name}`}>
-                      <span>{item.name}</span>
-                      <strong>{item.amount} 亿元</strong>
-                    </div>
-                  ))}
-                </div>
-              </details>
+                <strong>{member.name}</strong>
+                <span>{formatRiskNumber(member.amount)} 亿元</span>
+                <em>{member.subsidiaries.length} 条</em>
+                <ChevronRight size={16} />
+              </button>
             ))}
           </div>
         </details>
       ))}
     </div>
   );
+}
+
+function VankeRiskProjectSheetContent({ sheet }: { sheet: VankeRiskProjectSheet }) {
+  return (
+    <div className="mobile-demo-vanke-project-sheet">
+      <p className="mobile-demo-vanke-project-sheet-subtitle">
+        共 {sheet.records.length} 条，合计 {formatRiskNumber(sheet.amount)} 亿元
+      </p>
+      <div className="mobile-demo-vanke-project-list">
+        {sheet.records.map((record) => (
+          <article className="mobile-demo-vanke-project-card" key={`${sheet.riskKey}-${sheet.memberName}-${record.company}-${record.projectName}`}>
+            <div className="mobile-demo-vanke-project-head">
+              <strong>{record.company}</strong>
+              <b>{formatRiskNumber(record.amount)} 亿元</b>
+            </div>
+            <p>{record.projectName}</p>
+            <div className="mobile-demo-vanke-project-date">
+              <span>预警发起时间</span>
+              <strong>{record.warningStartDate}</strong>
+            </div>
+            <div className="mobile-demo-vanke-project-fields">
+              <span>
+                <em>成员公司</em>
+                <strong>{record.memberCompany}</strong>
+              </span>
+              <span>
+                <em>业务类型</em>
+                <strong>{record.businessType}</strong>
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getVankeRiskProjectDetails(riskKey: string, riskLabel: string, member: VankeRiskMember): MobileVankeRiskProjectDetail[] {
+  const detailMap = mobileVankeRiskProjectDetails as Record<string, Record<string, MobileVankeRiskProjectDetail[]>>;
+  const records = detailMap[riskKey]?.[member.name];
+
+  if (records?.length) {
+    return records;
+  }
+
+  const sheetRiskLabel = formatVankeRiskSheetLabel(riskLabel);
+
+  return member.subsidiaries.map((item) => ({
+    company: item.name,
+    projectName: `${item.name}${sheetRiskLabel}跟踪项目`,
+    warningStartDate: '2025-01-01',
+    memberCompany: member.name,
+    businessType: '非标',
+    amount: item.amount,
+  }));
+}
+
+function formatVankeRiskSheetLabel(label: string) {
+  return label.replace('金额', '');
 }
 
 function LargeCustomerFilterSummary({
