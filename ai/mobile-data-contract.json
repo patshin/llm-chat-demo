@@ -1,0 +1,356 @@
+{
+  "project": "LLM 企业内部风险管理对话式机器人 demo",
+  "contractPurpose": "约束移动端 demo 只能复用当前桌面端已有 mock 数据和本地常量，不新增业务数字。",
+  "globalRules": [
+    "移动端展示的金额、比例、日期、评级、数量、名单类型和明细行必须来自 sourceDataName 对应的数据源。",
+    "可以改变布局、排序方式、图表形态和折叠方式，但不能改写 mustNotChangeValues 中的业务值。",
+    "当前桌面中未渲染的数据源不得默认替换已渲染数据源，除非后续需求明确指定。"
+  ],
+  "modules": [
+    {
+      "moduleName": "集团集中度分析",
+      "sourceDataName": [
+        "generalEnterpriseGroups",
+        "financialInstitutionGroups",
+        "vankeTrendData",
+        "vankeMemberCompanyComparisonData",
+        "vankeMetrics",
+        "App.tsx: ComboTrendChart exposureTopLabels"
+      ],
+      "amountFields": {
+        "generalEnterpriseGroups": ["limit"],
+        "financialInstitutionGroups": ["limit"],
+        "vankeTrendData": ["exposure"],
+        "vankeMemberCompanyComparisonData": ["previous", "current"],
+        "vankeMetrics": ["value where title is 已占用额度"],
+        "App.tsx: ComboTrendChart exposureTopLabels": ["visible bar top labels"]
+      },
+      "percentageFields": {
+        "generalEnterpriseGroups": ["limitUsage"],
+        "financialInstitutionGroups": ["limitUsage"],
+        "vankeTrendData": ["concentration", "threshold"],
+        "vankeMetrics": ["value where title is 限额占用比例", "change where title is 限额占用比例"],
+        "App.tsx: ComboTrendChart": ["90% threshold line"]
+      },
+      "dateFields": {
+        "vankeTrendData": ["month"],
+        "vankeMemberCompanyComparisonData": ["legend labels 2025-05 and 2024-12"]
+      },
+      "ratingFields": {
+        "vankeMetrics": ["value where title is 统一信评", "value where title is 集中度限额占用预警"]
+      },
+      "countFields": {
+        "generalEnterpriseGroups": ["array length", "rank index"],
+        "financialInstitutionGroups": ["array length", "rank index"]
+      },
+      "mustNotChangeValues": [
+        "generalEnterpriseGroups all rows and order",
+        "financialInstitutionGroups all rows and order",
+        "vankeTrendData all month/exposure/concentration/threshold values",
+        "vankeMemberCompanyComparisonData all name/previous/current values",
+        "vankeMetrics all title/value/unit/change/badge values",
+        "ComboTrendChart exposureTopLabels 520, 535, 560, 585, 610, 625, 640, 660, 675, 690, 705, 720",
+        "ComboTrendChart visible threshold label 90%"
+      ]
+    },
+    {
+      "moduleName": "交易对手持仓分析",
+      "sourceDataName": [
+        "App.tsx: counterpartyTrendData",
+        "App.tsx: counterpartyMemberData",
+        "App.tsx: counterpartyAssetData",
+        "App.tsx: counterpartyStackedData",
+        "App.tsx: stackLegend"
+      ],
+      "amountFields": {
+        "counterpartyTrendData": ["value"],
+        "counterpartyMemberData": ["value"],
+        "counterpartyAssetData": ["value"],
+        "counterpartyStackedData": ["total", "values[]"]
+      },
+      "percentageFields": {
+        "counterpartyTrendData": ["mom"],
+        "assistantCopy": ["8.21%", "可控范围"]
+      },
+      "dateFields": {
+        "counterpartyTrendData": ["label as month"]
+      },
+      "ratingFields": {
+        "assistantCopy": ["可控范围"]
+      },
+      "countFields": {
+        "counterpartyTrendData": ["array length"],
+        "counterpartyMemberData": ["array length"],
+        "counterpartyAssetData": ["array length"],
+        "counterpartyStackedData": ["array length"],
+        "stackLegend": ["array length and order"]
+      },
+      "mustNotChangeValues": [
+        "counterpartyTrendData all label/value/mom values",
+        "counterpartyMemberData all label/value values",
+        "counterpartyAssetData all label/value values",
+        "counterpartyStackedData all label/total/values values",
+        "stackLegend labels and colors",
+        "AI copy visible values 286.35 亿元 and 8.21%"
+      ]
+    },
+    {
+      "moduleName": "黑灰白名单查询",
+      "sourceDataName": [
+        "nameListStats",
+        "blackListItems",
+        "greyListItems",
+        "whiteListItems",
+        "entityHitResult",
+        "App.tsx: NameListDetails local groups"
+      ],
+      "amountFields": {},
+      "percentageFields": {},
+      "dateFields": {
+        "blackListItems": ["date"],
+        "greyListItems": ["date"],
+        "whiteListItems": ["date"],
+        "entityHitResult": ["date"]
+      },
+      "ratingFields": {
+        "nameListStats": ["type"],
+        "blackListItems": ["reason"],
+        "greyListItems": ["reason"],
+        "whiteListItems": ["reason"],
+        "entityHitResult": ["listType", "reason", "suggestion"]
+      },
+      "countFields": {
+        "nameListStats": ["count"],
+        "App.tsx: NameListDetails local groups": ["count 55", "count 70", "count 30"],
+        "assistantCopy": ["155 个", "55 个", "70 个", "30 个"]
+      },
+      "mustNotChangeValues": [
+        "nameListStats all type/count values",
+        "blackListItems all name/reason/date/reporter values",
+        "greyListItems all name/reason/date/reporter values",
+        "whiteListItems all name/reason/date/reporter values",
+        "entityHitResult all fields including multiline suggestion",
+        "NameListDetails local counts 55, 70, 30"
+      ]
+    },
+    {
+      "moduleName": "评级查询",
+      "sourceDataName": [
+        "ratingEntitySummary",
+        "internalAnnualRatingRecords",
+        "externalRatingAgencies",
+        "externalRatingMeaning",
+        "internalRatingTrendData (not currently rendered)",
+        "internalRatingHistory (not currently rendered)"
+      ],
+      "amountFields": {},
+      "percentageFields": {},
+      "dateFields": {
+        "ratingEntitySummary": ["updatedAt", "latestExternalDate"],
+        "internalAnnualRatingRecords": ["effectiveDate", "reportYear"],
+        "externalRatingAgencies": ["date", "history[].date"],
+        "internalRatingTrendData": ["date"],
+        "internalRatingHistory": ["date"]
+      },
+      "ratingFields": {
+        "ratingEntitySummary": ["highestInternalRating", "lowestInternalRating", "latestInternalRating", "latestExternalRating", "latestExternalOutlook", "riskStatus"],
+        "internalAnnualRatingRecords": ["rating"],
+        "externalRatingAgencies": ["rating", "outlook", "history[].rating", "history[].outlook"],
+        "externalRatingMeaning": ["title", "content"],
+        "internalRatingTrendData": ["rating", "note"],
+        "internalRatingHistory": ["rating", "change", "note"]
+      },
+      "countFields": {
+        "internalAnnualRatingRecords": ["array length"],
+        "externalRatingAgencies": ["array length", "history array lengths"]
+      },
+      "mustNotChangeValues": [
+        "ratingEntitySummary all values",
+        "internalAnnualRatingRecords all rows",
+        "externalRatingAgencies all agencies, current ratings, dates, outlook values and history rows",
+        "externalRatingMeaning title and content",
+        "Do not surface internalRatingTrendData or internalRatingHistory as if they were rendered desktop data unless explicitly requested"
+      ]
+    },
+    {
+      "moduleName": "预警出险查询",
+      "sourceDataName": [
+        "warningInsuranceOverview",
+        "warningInsuranceTrendData",
+        "warningInsuranceMemberDistribution",
+        "vankeWarningInsuranceSummary",
+        "vankeRiskDrilldown"
+      ],
+      "amountFields": {
+        "warningInsuranceOverview": ["totalExposure"],
+        "warningInsuranceTrendData": ["major", "second", "first", "defaulted", "total"],
+        "warningInsuranceMemberDistribution": ["major", "second", "first", "defaulted", "total"],
+        "vankeWarningInsuranceSummary": ["exposure", "majorWarningAmount", "secondLevelWarningAmount", "firstLevelWarningAmount", "defaultAmount"],
+        "vankeRiskDrilldown": ["amount", "members[].amount", "members[].subsidiaries[].amount"]
+      },
+      "percentageFields": {
+        "vankeRiskDrilldown": ["ratio", "members[].ratio", "members[].subsidiaries[].ratio"]
+      },
+      "dateFields": {
+        "warningInsuranceTrendData": ["month"],
+        "vankeRiskDrilldown": ["members[].subsidiaries[].warningStartTime when present"]
+      },
+      "ratingFields": {
+        "warningInsuranceTrendData": ["risk keys major/second/first/defaulted"],
+        "warningInsuranceMemberDistribution": ["risk keys major/second/first/defaulted"],
+        "vankeRiskDrilldown": ["key", "label", "reason", "businessType"]
+      },
+      "countFields": {
+        "warningInsuranceOverview": ["totalSubjects", "majorWarningSubjects", "secondLevelWarningSubjects", "firstLevelWarningSubjects", "defaultSubjects"],
+        "warningInsuranceTrendData": ["array length"],
+        "warningInsuranceMemberDistribution": ["array length"],
+        "vankeRiskDrilldown": ["risk type count", "members count", "subsidiaries count"]
+      },
+      "mustNotChangeValues": [
+        "warningInsuranceOverview all fields",
+        "warningInsuranceTrendData all month and risk amount values",
+        "warningInsuranceMemberDistribution all member and risk amount values",
+        "vankeWarningInsuranceSummary all fields",
+        "vankeRiskDrilldown all nested values",
+        "assistant visible values 520 亿元, 200 亿元, 30 亿元, 50 亿元, 80 亿元, 20 亿元"
+      ]
+    },
+    {
+      "moduleName": "大户查询",
+      "sourceDataName": [
+        "largeCustomerOverview",
+        "largeCustomerTrendData",
+        "largeCustomerTableData",
+        "keyManagementLargeCustomerTrendData (not currently rendered)"
+      ],
+      "amountFields": {
+        "largeCustomerOverview": ["totalExposure", "momExposureChange", "ytdExposureChange", "keyManagementExposure"],
+        "largeCustomerTrendData": ["totalExposure"],
+        "largeCustomerTableData": ["exposure", "momChange", "ytdChange"],
+        "keyManagementLargeCustomerTrendData": ["totalExposure"]
+      },
+      "percentageFields": {
+        "largeCustomerOverview": ["keyManagementExposureRatio"]
+      },
+      "dateFields": {
+        "largeCustomerOverview": ["date"],
+        "largeCustomerTrendData": ["month"],
+        "keyManagementLargeCustomerTrendData": ["month"]
+      },
+      "ratingFields": {
+        "largeCustomerTableData": ["ownership", "managementCategory"]
+      },
+      "countFields": {
+        "largeCustomerOverview": ["totalCustomers", "keyManagementCustomers", "defaultCustomers"],
+        "largeCustomerTrendData": ["customerCount"],
+        "largeCustomerTableData": ["array length"],
+        "keyManagementLargeCustomerTrendData": ["customerCount"]
+      },
+      "mustNotChangeValues": [
+        "largeCustomerOverview all fields",
+        "largeCustomerTrendData all rows",
+        "largeCustomerTableData all rows",
+        "LargeCustomerTable summary row must be calculated from filtered rows, not invented",
+        "Do not surface keyManagementLargeCustomerTrendData as rendered desktop trend unless explicitly requested"
+      ]
+    },
+    {
+      "moduleName": "单一大户查询",
+      "sourceDataName": [
+        "App.tsx: singleLargeMetrics",
+        "singleLargeCustomerCompanyExposure",
+        "singleLargeCustomerAssetExposure",
+        "holdingMemberCompanyRows",
+        "holdingAssetTypeRows",
+        "memberCompanyHoldingDetails",
+        "assetTypeHoldingDetails",
+        "singleLargeCustomerWarningMetrics",
+        "singleLargeCustomerWarningCompanyDistribution",
+        "App.tsx: currentWarningSummaryRows",
+        "App.tsx: singleLargeWarningDrilldown",
+        "ratingEntitySummary",
+        "internalAnnualRatingRecords",
+        "externalRatingAgencies",
+        "externalRatingMeaning",
+        "App.tsx: singleLargeCustomerSentimentFeed",
+        "blackListItems",
+        "greyListItems",
+        "whiteListItems",
+        "singleLargeCustomerProfile (not currently rendered)",
+        "singleLargeCustomerFundingSources (not currently rendered)",
+        "singleLargeCustomerWarningEvents (not currently rendered)",
+        "singleLargeCustomerNameListSummary (not currently rendered)",
+        "singleLargeCustomerBlackListRecords (not currently rendered)",
+        "singleLargeCustomerGreyListRecords (not currently rendered)"
+      ],
+      "amountFields": {
+        "singleLargeMetrics": ["value where metric is amount", "change where metric contains amount"],
+        "singleLargeCustomerCompanyExposure": ["value"],
+        "singleLargeCustomerAssetExposure": ["value"],
+        "holdingMemberCompanyRows": ["amount"],
+        "holdingAssetTypeRows": ["amount"],
+        "memberCompanyHoldingDetails": ["amount"],
+        "assetTypeHoldingDetails": ["amount"],
+        "singleLargeCustomerWarningMetrics": ["major", "second", "first", "defaulted", "total"],
+        "singleLargeCustomerWarningCompanyDistribution": ["major", "second", "first", "defaulted", "total"],
+        "singleLargeWarningDrilldown": ["amount", "members[].amount", "members[].subsidiaries[].amount"]
+      },
+      "percentageFields": {
+        "singleLargeMetrics": ["subChange", "change where contains 占比"],
+        "holdingMemberCompanyRows": ["ratio"],
+        "holdingAssetTypeRows": ["ratio"],
+        "CompanyExposureBars": ["derived ratio from current data total"],
+        "CurrentWarningSummaryChart": ["derived ratio from singleLargeCustomerWarningMetrics.total"]
+      },
+      "dateFields": {
+        "singleLargeMetrics": ["latest rating date 2025-06-20"],
+        "memberCompanyHoldingDetails": ["startDate", "endDate"],
+        "assetTypeHoldingDetails": ["startDate", "endDate"],
+        "singleLargeWarningDrilldown": ["warningStartTime when present or fallback display 2025-01-01"],
+        "singleLargeCustomerSentimentFeed": ["date"],
+        "ratingEntitySummary": ["updatedAt", "latestExternalDate"],
+        "internalAnnualRatingRecords": ["effectiveDate", "reportYear"],
+        "externalRatingAgencies": ["date", "history[].date"],
+        "blackListItems": ["date"],
+        "greyListItems": ["date"],
+        "whiteListItems": ["date"]
+      },
+      "ratingFields": {
+        "singleLargeMetrics": ["latest internal rating 7A", "black/grey list text"],
+        "singleLargeCustomerSentimentFeed": ["level"],
+        "ratingEntitySummary": ["highestInternalRating", "lowestInternalRating", "latestInternalRating", "latestExternalRating", "latestExternalOutlook", "riskStatus"],
+        "internalAnnualRatingRecords": ["rating"],
+        "externalRatingAgencies": ["rating", "outlook", "history[].rating", "history[].outlook"],
+        "blackListItems": ["reason"],
+        "greyListItems": ["reason"],
+        "whiteListItems": ["reason"]
+      },
+      "countFields": {
+        "singleLargeMetrics": ["black list count text", "grey list count text"],
+        "singleLargeCustomerCompanyExposure": ["array length"],
+        "singleLargeCustomerAssetExposure": ["array length"],
+        "holdingMemberCompanyRows": ["array length"],
+        "holdingAssetTypeRows": ["array length"],
+        "singleLargeCustomerSentimentFeed": ["rendered high item count", "rendered medium item count", "visible summary 18/5/13"],
+        "NameListDetails reused": ["counts 55/70/30 from global module"]
+      },
+      "mustNotChangeValues": [
+        "singleLargeMetrics all metric title/value/unit/change/subChange values",
+        "singleLargeCustomerCompanyExposure all rows",
+        "singleLargeCustomerAssetExposure all rows",
+        "holdingMemberCompanyRows all rows including ratio strings",
+        "holdingAssetTypeRows all rows including ratio strings",
+        "memberCompanyHoldingDetails and assetTypeHoldingDetails all nested rows",
+        "singleLargeCustomerWarningMetrics all fields",
+        "singleLargeCustomerWarningCompanyDistribution all rows",
+        "currentWarningSummaryRows order, labels and colors",
+        "singleLargeWarningDrilldown all nested values",
+        "singleLargeCustomerSentimentFeed all rendered cards and detail body values",
+        "visible sentiment summary values 18, 5, 13",
+        "SingleRatingTab currently reuses ratingEntitySummary, internalAnnualRatingRecords, externalRatingAgencies and externalRatingMeaning",
+        "NameListTab currently reuses global NameListDetails data and counts",
+        "Do not replace current rendered black/grey/white data with singleLargeCustomerBlackListRecords or singleLargeCustomerGreyListRecords unless the desktop module is explicitly changed first"
+      ]
+    }
+  ]
+}

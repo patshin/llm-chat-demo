@@ -1,0 +1,405 @@
+{
+  "project": "LLM 企业内部风险管理对话式机器人 demo",
+  "desktopEntry": "src/main.tsx -> src/App.tsx",
+  "scopeNotes": [
+    "本文件只盘点当前桌面端已存在的模块结构、交互和数据来源。",
+    "后续移动端可以重新排版，但业务数字、日期、评级、名单记录和行级数据必须来自本盘点列出的源数据。",
+    "交易对手持仓数据、单一大户部分舆情和部分穿透明细定义在 src/App.tsx 本地常量中，不在 src/mockData.ts 中。",
+    "标记为未渲染的数据源表示当前代码中存在或已导入，但桌面 UI 没有实际展示。"
+  ],
+  "modules": [
+    {
+      "moduleName": "集团集中度分析",
+      "routeOrComponent": "DesktopView scene='group' -> GroupConcentrationScene -> GroupOverviewStep + VankeConcentrationStep",
+      "tabs": [
+        "GroupOverviewStep: 一般企业集团 / 金融机构集团",
+        "VankeConcentrationStep: 趋势分析 / 维度分析"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 切换到集团集中度分析。",
+        "集团整体集中度中切换一般企业集团和金融机构集团。",
+        "万科集团集中度中切换趋势分析和维度分析。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "HorizontalBarChart: 展示集团限额占用排名、限额占用金额和限额占用率，并按超限/预警/正常派生状态。",
+        "ComboTrendChart: 展示万科集团集中度限额占用趋势，柱为已占用额度，线为限额占用比例，图中还有 90% 阈值线。",
+        "VankeMemberComparisonChart: 展示 2025-05 与 2024-12 在各成员公司的持仓额度对比。"
+      ],
+      "tables": [
+        "HorizontalBarChart 内部使用 role='table' 的横向榜单结构，列为排名、交易对手、限额占用、限额占用率。",
+        "当前模块没有独立 DataTable 表格组件。"
+      ],
+      "keyMetrics": [
+        "vankeMetrics: 已占用额度 650 亿元。",
+        "vankeMetrics: 限额占用比例 78.6%。",
+        "vankeMetrics: 统一信评 2C。",
+        "vankeMetrics: 集中度限额占用预警 预警。",
+        "万科摘要文案: 当前集中度限额 800 亿元，已占用额度 650 亿元，限额占用率 78.6%。"
+      ],
+      "sourceMockData": [
+        "src/mockData.ts: generalEnterpriseGroups",
+        "src/mockData.ts: financialInstitutionGroups",
+        "src/mockData.ts: vankeTrendData",
+        "src/mockData.ts: vankeMemberCompanyComparisonData",
+        "src/mockData.ts: vankeMetrics",
+        "src/App.tsx local constant: ComboTrendChart exposureTopLabels and 90% threshold display"
+      ],
+      "mustPreserveDataPoints": [
+        "generalEnterpriseGroups rows: 万科集团 650 / 102.3%, 龙湖集团 180 / 92.1%, 保利发展 150 / 75.6%, 招商蛇口 120 / 68.4%, 华润置地 95 / 53.7%, 绿城中国 75 / 41.2%。",
+        "financialInstitutionGroups rows: 平安集团 420 / 96.5%, 中信集团 360 / 82.4%, 招商局集团 300 / 78.6%, 光大集团 220 / 65.2%, 国寿集团 180 / 58.9%, 华泰证券 120 / 42.7%。",
+        "vankeTrendData months 2024-06 到 2025-05, exposure 420/435/460/480/510/530/550/570/600/620/640/650, concentration 67.5/68.1/69.0/71.2/72.2/72.8/74.1/75.3/76.8/77.6/78.2/78.6, threshold 字段为 80。",
+        "ComboTrendChart 桌面可见柱顶标签为 520/535/560/585/610/625/640/660/675/690/705/720, 当前属于 App.tsx 本地图表展示值。",
+        "vankeMemberCompanyComparisonData: 银行 210->260, 寿险 130->155, 证券 75->95, 资管 50->70, 信托 30->45, 基金 15->25。",
+        "vankeMetrics 四项值和文案不能改写为新数字。"
+      ],
+      "recommendedMobileScreens": [
+        "集团集中度入口页: 保留一般企业集团和金融机构集团两个榜单切换。",
+        "万科集中度概览页: 保留 650 亿元、78.6%、2C、预警四个指标。",
+        "万科趋势页: 将组合趋势图改为移动端可横向滑动的小图或按月份趋势卡。",
+        "成员公司分布页: 将对比柱状图改为横向对比条或成员公司卡片。"
+      ]
+    },
+    {
+      "moduleName": "交易对手持仓分析",
+      "routeOrComponent": "DesktopView scene='counterparty' -> CounterpartyHoldingScene -> CounterpartyTrendAnalysis / CounterpartyDimensionAnalysis",
+      "tabs": [
+        "一级 tab: 趋势分析 / 维度分析",
+        "趋势分析内部: 图表 / 表格",
+        "维度分析内部: 图表 / 表格",
+        "维度筛选: 成员公司固定保留，资产类型可开关；模式为成员公司、资产类型、成员公司 + 资产类型"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 切换到交易对手持仓分析。",
+        "趋势分析中切换柱状图和趋势表格。",
+        "维度分析中打开维度筛选下拉，切换资产类型复选框。",
+        "维度分析中切换图表和表格。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "VerticalBarChart: 趋势分析柱状图，数据来自 counterpartyTrendData。",
+        "VerticalBarChart: 成员公司维度柱状图，数据来自 counterpartyMemberData。",
+        "VerticalBarChart: 资产类型维度柱状图，数据来自 counterpartyAssetData。",
+        "SimpleStackedBarChart: 成员公司 + 资产类型堆叠柱状图，数据来自 counterpartyStackedData 和 stackLegend。"
+      ],
+      "tables": [
+        "CounterpartyDataTable: 时间、持仓规模、较上月环比，展示 counterpartyTrendData 的倒序。",
+        "CounterpartyDimensionTable: 成员公司、债券、股票、基金、非标、其他、合计，展示 counterpartyStackedData。"
+      ],
+      "keyMetrics": [
+        "当前没有独立指标卡片，关键指标展示在 AI 回答文案中。",
+        "总持仓规模 286.35 亿元。",
+        "较上月增长 8.21%。",
+        "主要成员公司: 平安银行、平安信托、平安证券。",
+        "主要三级资产类型: 债券、信贷、零售对公。",
+        "整体集中度: 可控范围。"
+      ],
+      "sourceMockData": [
+        "src/App.tsx local constant: counterpartyTrendData",
+        "src/App.tsx local constant: counterpartyMemberData",
+        "src/App.tsx local constant: counterpartyAssetData",
+        "src/App.tsx local constant: counterpartyStackedData",
+        "src/App.tsx local constant: stackLegend"
+      ],
+      "mustPreserveDataPoints": [
+        "counterpartyTrendData: 2024-12 210.32 -, 2025-01 223.45 ↑ 6.24%, 2025-02 236.81 ↑ 5.98%, 2025-03 249.87 ↑ 5.52%, 2025-04 264.59 ↑ 5.89%, 2025-05 286.35 ↑ 8.21%。",
+        "counterpartyMemberData: 银行 100.12, 证券 72.35, 信托 48.26, 资管 32.18, 基金 21.66, 其他 11.78。",
+        "counterpartyAssetData: 债券 167.28, 股票 68.74, 基金 28.31, 非标 14.22, 现金及其他 7.8。",
+        "counterpartyStackedData: 银行 total 100.12 values 52.36/28.21/12.15/5.4/2; 证券 total 72.35 values 36.28/20.14/8.05/4.7/3.18; 信托 total 48.26 values 22.31/12.36/7.56/3.11/2.92; 资管 total 32.18 values 15.26/7.85/5.12/2.15/1.8; 基金 total 21.66 values 9.87/6.12/3.44/1.49/0.74; 其他 total 11.78 values 5.2/3.1/1.6/1.4/0.48。",
+        "stackLegend 顺序必须保持为 债券、股票、基金、非标、其他。"
+      ],
+      "recommendedMobileScreens": [
+        "交易对手持仓概览页: 保留 286.35 亿元、8.21%、主要成员公司、主要资产类型和可控结论。",
+        "趋势页: 图表优先，表格作为折叠表或 bottom sheet。",
+        "维度页: 维度筛选改为 segmented control 或 bottom sheet，多维堆叠图改为横向堆叠条。",
+        "明细表页: 仅在用户选择表格时进入，避免首屏拥挤。"
+      ]
+    },
+    {
+      "moduleName": "黑灰白名单查询",
+      "routeOrComponent": "DesktopView scene='namelist' -> BlacklistQueryView + EntityHitResultView",
+      "tabs": [
+        "BlacklistQueryView: 整体情况 / 黑灰名单详情",
+        "NameListDetails: 黑名单、灰名单、白名单* 折叠面板"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 切换到黑灰白名单查询。",
+        "在整体情况和黑灰名单详情之间切换。",
+        "折叠或展开黑名单、灰名单、白名单* 明细。",
+        "单一法人公司查询结果以静态详情表展示。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "NameListSummaryChart: 黑名单、灰名单、白名单* 数量柱状图，数据来自 nameListStats。"
+      ],
+      "tables": [
+        "NameListAccordionTable: 企业名称、入库原因、入库日期、上报公司。",
+        "EntityRiskDetailTable: 主体名称、名单类型、所属集团、入库原因、入库日期、上报公司、管控策略。"
+      ],
+      "keyMetrics": [
+        "名单库主体总数 155 个，来自 55 + 70 + 30。",
+        "黑名单 55 个。",
+        "灰名单 70 个。",
+        "白名单* 30 个。",
+        "单一法人命中结果: 万科服务有限公司命中黑名单。"
+      ],
+      "sourceMockData": [
+        "src/mockData.ts: nameListStats",
+        "src/mockData.ts: blackListItems",
+        "src/mockData.ts: greyListItems",
+        "src/mockData.ts: whiteListItems",
+        "src/mockData.ts: entityHitResult",
+        "src/App.tsx local grouping in NameListDetails mirrors counts 55/70/30"
+      ],
+      "mustPreserveDataPoints": [
+        "nameListStats: 黑名单 55, 灰名单 70, 白名单* 30。",
+        "blackListItems 五条记录: 万科物业服务有限公司 2024-12-29 寿险; 深圳万科企业股份有限公司 2025-01-15 银行; 万科地产开发有限公司 2025-02-08 证券; 万科城市建设有限公司 2025-02-21 银行; 万科商业管理有限公司 2025-03-05 信托。",
+        "greyListItems 四条记录: 万科物业华东区域公司 2025-01-08 寿险; 万科南方区域公司 2025-01-20 银行; 万科华东区域公司 2025-02-11 证券; 万科城市运营有限公司 2025-02-26 资管。",
+        "whiteListItems 三条记录: 万科物业管理（深圳）有限公司 2024-11-18 银行; 万科基金管理有限公司 2024-12-05 寿险; 万科住宅开发有限公司 2025-01-12 基金。",
+        "entityHitResult: 万科服务有限公司, 黑名单, 万科企业集团, 该客户存在违约或负面舆情, 2024-12-29, 寿险, 以及完整管控策略文案。"
+      ],
+      "recommendedMobileScreens": [
+        "名单概览页: 将三类名单数量转为三张指标卡或短柱条。",
+        "名单详情页: 用折叠卡片承接黑名单、灰名单、白名单* 明细。",
+        "法人命中详情页: 将 EntityRiskDetailTable 改为 key-value 卡片，管控策略可放入折叠区。"
+      ]
+    },
+    {
+      "moduleName": "评级查询",
+      "routeOrComponent": "DesktopView scene='rating' -> RatingQueryView -> RatingSummaryCard + InternalRatingPanel / ExternalRatingPanel",
+      "tabs": [
+        "评级查询: 内部评级 / 外部评级",
+        "ExternalRatingPanel: 按评级机构展开或收起历史评级"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 切换到评级查询。",
+        "内部评级和外部评级 tab 切换。",
+        "外部评级机构行展开历史评级。",
+        "点击帮助图标打开评级含义 popover。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "当前桌面 UI 未渲染评级图表。",
+        "src/mockData.ts 中存在 internalRatingTrendData 和 internalRatingHistory，但当前桌面页面没有接入。"
+      ],
+      "tables": [
+        "InternalRatingHistoryTable: 专业公司、有效评级、评级年报年份、生效日，数据来自 internalAnnualRatingRecords。",
+        "ExternalRatingPanel: 评级机构、评级结果、披露日期，并展开历史披露日期和评级结果。"
+      ],
+      "keyMetrics": [
+        "评级主体: 深圳华侨城股份有限公司。",
+        "所属集团: 华侨城集团。",
+        "行业: 综合旅游 / 房地产。",
+        "最高内部信评 3B，最低内部信评 3D，最新内部信评 3B。",
+        "最新外部评级: 大公国际 AAA。",
+        "评级展望: 稳定。",
+        "最近评级日期: 2025-11-24。",
+        "风险状态字段: 关注。"
+      ],
+      "sourceMockData": [
+        "src/mockData.ts: ratingEntitySummary",
+        "src/mockData.ts: internalAnnualRatingRecords",
+        "src/mockData.ts: externalRatingAgencies",
+        "src/mockData.ts: externalRatingMeaning",
+        "src/mockData.ts: internalRatingTrendData (存在但当前未渲染)",
+        "src/mockData.ts: internalRatingHistory (存在但当前未渲染)"
+      ],
+      "mustPreserveDataPoints": [
+        "ratingEntitySummary 全字段: name, group, subjectType, industry, updatedAt, highestInternalRating, lowestInternalRating, latestInternalRating, latestExternalAgency, latestExternalRating, latestExternalOutlook, latestExternalDate, riskStatus。",
+        "internalAnnualRatingRecords 六条记录及其 rating、reportYear、effectiveDate 必须保持。",
+        "externalRatingAgencies 四家机构: 大公国际 AAA 2025-11-24, 联合资信 AAA 2025-08-15, 中诚信国际 AA+ 2024-11-10, 东方金诚 AA+ 2024-05-22。",
+        "每家 externalRatingAgencies.history 的日期、评级和 outlook 均不能改写。",
+        "externalRatingMeaning.title 和 content 不能改写为新评级含义。"
+      ],
+      "recommendedMobileScreens": [
+        "评级摘要页: 保留主体、集团、行业、内部评级摘要和最新外部评级。",
+        "内部评级页: 将成员公司评级表改为卡片列表，可按生效日排序。",
+        "外部评级页: 评级机构列表，历史记录用折叠区或 bottom sheet。",
+        "评级含义 bottom sheet: 替代桌面 popover。"
+      ]
+    },
+    {
+      "moduleName": "预警出险查询",
+      "routeOrComponent": "DesktopView scene='warning' -> WarningInsuranceQueryView + VankeWarningResultStep",
+      "tabs": [
+        "预警出险整体: 趋势分析 / 维度分析",
+        "RiskDrilldownPanel: 风险类型折叠，成员公司折叠"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 切换到预警出险查询。",
+        "趋势分析和维度分析 tab 切换。",
+        "万科企业集团风险金额穿透中展开或收起风险类型。",
+        "在风险类型下展开或收起成员公司，查看子公司明细。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "WarningStackedChart: 近6个月预警出险金额堆叠柱状图，数据来自 warningInsuranceTrendData。",
+        "WarningMemberBarChart: 成员公司预警出险金额横向堆叠条，数据来自 warningInsuranceMemberDistribution。"
+      ],
+      "tables": [
+        "RiskDrilldownPanel 内部折叠明细: 按风险类型、成员公司、子公司展示。",
+        "SubsidiaryBreakdownTable: 公司、项目名称、预警发起时间、成员公司、业务类型。"
+      ],
+      "keyMetrics": [
+        "整体预警出险涉及持仓余额 520 亿元。",
+        "warningInsuranceTrendData 最新月 2025-06 total 217.82。",
+        "万科企业集团总体持仓余额 200 亿元。",
+        "万科重大预警金额 30 亿元。",
+        "万科二级预警金额 50 亿元。",
+        "万科一级预警金额 80 亿元。",
+        "万科出险金额 20 亿元。"
+      ],
+      "sourceMockData": [
+        "src/mockData.ts: warningInsuranceOverview",
+        "src/mockData.ts: warningInsuranceTrendData",
+        "src/mockData.ts: warningInsuranceMemberDistribution",
+        "src/mockData.ts: vankeWarningInsuranceSummary",
+        "src/mockData.ts: vankeRiskDrilldown"
+      ],
+      "mustPreserveDataPoints": [
+        "warningInsuranceOverview: totalSubjects 86, totalExposure 520, majorWarningSubjects 12, secondLevelWarningSubjects 18, firstLevelWarningSubjects 30, defaultSubjects 26。",
+        "warningInsuranceTrendData: 2025-01 total 179, 2025-02 total 192, 2025-03 total 201, 2025-04 total 198, 2025-05 total 195, 2025-06 total 217.82, 以及 major/second/first/defaulted 分项。",
+        "warningInsuranceMemberDistribution: 银行 total 210, 寿险 145, 证券 75, 信托 60, 资管 20, 其他 10, 以及每项 major/second/first/defaulted。",
+        "vankeWarningInsuranceSummary: groupName 万科企业集团, exposure 200, majorWarningAmount 30, secondLevelWarningAmount 50, firstLevelWarningAmount 80, defaultAmount 20。",
+        "vankeRiskDrilldown 中每个风险类型、成员公司、子公司、amount、ratio、reason 不能改写；已有 projectName、warningStartTime、memberCompany、businessType 字段也必须保留。"
+      ],
+      "recommendedMobileScreens": [
+        "预警出险概览页: 保留 520 亿元和整体结论。",
+        "趋势页: 将堆叠柱状图改为可横向滚动的堆叠条或月度卡片。",
+        "成员公司分布页: 保留成员公司 total 和占比，使用横向堆叠条。",
+        "万科穿透页: 风险类型和成员公司维持双层折叠，子公司明细用 bottom sheet 或折叠表。"
+      ]
+    },
+    {
+      "moduleName": "大户查询",
+      "routeOrComponent": "DesktopView scene='large' or scene in ['badAssets','market','liquidity'] -> LargeCustomerOverviewView",
+      "tabs": [
+        "大户查询: 趋势分析 / 维度分析"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 当前通过整体大户情况等 scene 进入 LargeCustomerOverviewView。",
+        "趋势分析和维度分析 tab 切换。",
+        "维度分析中集团名称模糊检索会过滤 largeCustomerTableData。",
+        "企业性质、管理分类、日期为展示型 select/date 控件，当前不驱动过滤。",
+        "LargeCustomerTable 支持按持仓规模、较上月、较年初排序。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "LargeCustomerTrendChart: 柱为大户数量，折线为大户总持仓规模，数据来自 largeCustomerTrendData。"
+      ],
+      "tables": [
+        "LargeCustomerTable: 企业名称、企业性质、管理分类、持仓规模、较上月、较年初。",
+        "LargeCustomerTable 顶部有当前筛选合计行，合计由当前 rows 计算。"
+      ],
+      "keyMetrics": [
+        "截至 2025-06-30。",
+        "集团大户客户 325 家。",
+        "整体持仓规模 3,286.75 亿元。",
+        "较上月增加 128.63 亿元。",
+        "较年初增加 512.34 亿元。",
+        "重点管理大户 126 家。",
+        "重点管理持仓规模 1,871.36 亿元。",
+        "重点管理占比 56.96%。"
+      ],
+      "sourceMockData": [
+        "src/mockData.ts: largeCustomerOverview",
+        "src/mockData.ts: largeCustomerTrendData",
+        "src/mockData.ts: largeCustomerTableData",
+        "src/mockData.ts: keyManagementLargeCustomerTrendData (存在并已导入，但当前桌面 UI 未渲染)"
+      ],
+      "mustPreserveDataPoints": [
+        "largeCustomerOverview: date 2025-06-30, totalCustomers 325, totalExposure 3286.75, momExposureChange 128.63, ytdExposureChange 512.34, keyManagementCustomers 126, keyManagementExposure 1871.36, keyManagementExposureRatio 56.96%, defaultCustomers 23。",
+        "largeCustomerTrendData: 2024-12 278 / 2774.41, 2025-01 285 / 2820.18, 2025-02 291 / 2885.02, 2025-03 298 / 2978.61, 2025-04 305 / 3078.12, 2025-05 307 / 3158.12, 2025-06 325 / 3286.75。",
+        "largeCustomerTableData 八条记录及 name、ownership、managementCategory、exposure、momChange、ytdChange 必须保持。",
+        "当前筛选合计行必须由实际筛选后的 largeCustomerTableData 计算，不能写死新合计。"
+      ],
+      "recommendedMobileScreens": [
+        "大户概览页: 保留 325 家、3286.75 亿元、128.63 亿元、512.34 亿元、126 家、1871.36 亿元、56.96%。",
+        "趋势页: 将柱线组合图改为移动端简化组合图或月度趋势卡。",
+        "客户明细页: 将宽表拆成客户卡片列表，排序控件放在顶部或 bottom sheet。",
+        "筛选页或 bottom sheet: 承接集团名称、企业性质、管理分类、日期筛选。"
+      ]
+    },
+    {
+      "moduleName": "单一大户查询",
+      "routeOrComponent": "DesktopView scene='singleLarge' -> SingleLargeCustomerView -> HoldingScaleTab / WarningInsuranceTab / SingleRatingTab / SentimentTab / NameListTab",
+      "tabs": [
+        "一级 tab: 持仓规模 / 出险预警 / 评级 / 舆情 / 黑灰名单",
+        "持仓规模: 成员公司 / 资产类型, 图表 / 表格",
+        "出险预警: 汇总视图 / 成员公司视图, 图表 / 表格",
+        "评级: 内部评级 / 外部评级",
+        "舆情: 全部 / 高风险 / 中风险",
+        "黑灰名单: 复用 NameListDetails 的黑名单、灰名单、白名单* 折叠面板"
+      ],
+      "mainInteractions": [
+        "左侧 Sidebar 默认进入单一大户查询。",
+        "一级 tab 切换持仓、预警、评级、舆情、黑灰名单。",
+        "持仓规模中切换分析维度和图表/表格；表格行可展开持仓明细。",
+        "出险预警中切换汇总视图、成员公司视图、图表和表格；表格支持风险类型和成员公司双层展开。",
+        "评级中切换内部评级和外部评级，并可打开评级含义 popover。",
+        "舆情中按风险等级筛选，点击舆情卡片打开右侧详情抽屉。",
+        "ChatInput 仅展示输入，不触发真实接口。"
+      ],
+      "charts": [
+        "CompanyExposureBars: 持仓规模成员公司或资产类型横向条。",
+        "CurrentWarningSummaryChart: 当前出险预警金额汇总横向进度条。",
+        "StackedRiskChart: 预警出险专业公司分布堆叠柱。",
+        "当前代码存在 FundingSourceColumnChart，但桌面页面未渲染。"
+      ],
+      "tables": [
+        "HoldingDistributionTable: 成员公司或资产类型、持仓规模、占比、操作。",
+        "HoldingInlineDetails: 展开后展示分法人公司、专业公司、资产类型、证券/产品名称、起息日、到期日、持仓规模。",
+        "SingleLargeWarningDrilldownTable: 按出险、重大预警、二级预警、一级预警分层展开。",
+        "SingleSubsidiaryBreakdownTable: 公司、项目名称、预警发起时间、成员公司、业务类型。",
+        "InternalRatingHistoryTable 和 ExternalRatingPanel 复用评级查询模块表格。",
+        "NameListDetails 复用黑灰白名单查询模块表格。"
+      ],
+      "keyMetrics": [
+        "singleLargeMetrics: 总持仓规模 285.53 亿元，较上月 +12.80 亿元，较年初 +4.70%。",
+        "singleLargeMetrics: 最大专业公司敞口 137.01 亿元，银行，占比 48.01%。",
+        "singleLargeMetrics: 出险预警金额 217.82 亿元。",
+        "singleLargeMetrics: 黑名单 4 条，灰名单 6 条。",
+        "singleLargeMetrics: 最新评级（内部）7A，日期 2025-06-20。",
+        "持仓表中银行金额 137.01 亿元，占比 47.98%，与指标卡 48.01% 均为当前桌面已有值，移动端不得自行统一改写。"
+      ],
+      "sourceMockData": [
+        "src/App.tsx local constant: singleLargeMetrics",
+        "src/mockData.ts: singleLargeCustomerCompanyExposure",
+        "src/mockData.ts: singleLargeCustomerAssetExposure",
+        "src/mockData.ts: holdingMemberCompanyRows",
+        "src/mockData.ts: holdingAssetTypeRows",
+        "src/mockData.ts: memberCompanyHoldingDetails",
+        "src/mockData.ts: assetTypeHoldingDetails",
+        "src/mockData.ts: singleLargeCustomerWarningMetrics",
+        "src/mockData.ts: singleLargeCustomerWarningCompanyDistribution",
+        "src/App.tsx local constant: currentWarningSummaryRows",
+        "src/App.tsx local constant: singleLargeWarningDrilldown",
+        "src/mockData.ts: ratingEntitySummary, internalAnnualRatingRecords, externalRatingAgencies, externalRatingMeaning (复用于单一大户评级 tab)",
+        "src/App.tsx local constant: singleLargeCustomerSentimentFeed",
+        "src/mockData.ts: blackListItems, greyListItems, whiteListItems (复用于单一大户黑灰名单 tab)",
+        "src/mockData.ts: singleLargeCustomerProfile, singleLargeCustomerFundingSources, singleLargeCustomerWarningEvents, singleLargeCustomerNameListSummary, singleLargeCustomerBlackListRecords, singleLargeCustomerGreyListRecords (存在或已导入，但当前桌面 UI 未渲染)"
+      ],
+      "mustPreserveDataPoints": [
+        "singleLargeMetrics 五张指标卡的值和辅助文案必须保持。",
+        "singleLargeCustomerCompanyExposure: 方正证券 0, 寿险 35.8, 养老险 1, 不动产 70.69, 银行 137.01, 资产管理 41, 证券 0.03。",
+        "singleLargeCustomerAssetExposure: 非标 118.5, 债券 86.2, 股票 42.8, 基金 25.6, 其他 12.43。",
+        "holdingMemberCompanyRows 和 holdingAssetTypeRows 的 amount 与 ratio 必须保持，包括银行 137.01 / 47.98% 和非标 118.5 / 41.50%。",
+        "memberCompanyHoldingDetails 与 assetTypeHoldingDetails 的每条 legalEntity、memberCompany、assetType、productName、startDate、endDate、amount 必须保持。",
+        "singleLargeCustomerWarningMetrics: major 30, second 50, first 117.82, defaulted 20, total 217.82。",
+        "singleLargeCustomerWarningCompanyDistribution: 银行 total 137, 不动产 70.69, 资产管理 41, 寿险 35.8, 信托 10, 证券 4, 以及分项 major/second/first/defaulted。",
+        "singleLargeWarningDrilldown 本地常量的风险类型、成员公司、子公司和金额必须保持。",
+        "singleLargeCustomerSentimentFeed: 高风险 3 条、 中风险 3 条已渲染卡片及详情文案必须保持；页面摘要中的 18 条、高风险 5 条、中风险 13 条也是当前桌面可见值。",
+        "单一大户评级 tab 当前复用 ratingEntitySummary、internalAnnualRatingRecords、externalRatingAgencies 和 externalRatingMeaning，不得改为未接入数据源后生成新评级。",
+        "单一大户黑灰名单 tab 当前复用全局 NameListDetails，不得自行换成 singleLargeCustomerBlackListRecords 或 singleLargeCustomerGreyListRecords，除非后续产品明确要求改接。"
+      ],
+      "recommendedMobileScreens": [
+        "单一大户概览页: 保留五个核心指标和 AI 结论。",
+        "持仓规模页: 成员公司和资产类型用 segmented control；图表转横向条，明细用折叠表或 bottom sheet。",
+        "出险预警页: 汇总风险金额做卡片，成员公司分布用堆叠横条，穿透明细用双层折叠。",
+        "评级页: 复用评级查询的信息结构，外部评级历史用 bottom sheet。",
+        "舆情页: 列表卡片 + 风险筛选，详情抽屉改为全屏详情页或 bottom sheet。",
+        "黑灰名单页: 复用名单折叠卡片，不新增单一大户专属数字。"
+      ]
+    }
+  ]
+}
