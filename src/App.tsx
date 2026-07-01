@@ -198,7 +198,7 @@ function DesktopView() {
 function Sidebar({ scene, onSceneChange }: { scene: SceneKey; onSceneChange: (scene: SceneKey) => void }) {
   const menus: Array<{ key: SceneKey; label: string }> = [
     { key: 'group', label: '集团集中度分析' },
-    { key: 'counterparty', label: '交易对手持仓分析' },
+    { key: 'counterparty', label: '交易对手持仓分析（万科）' },
     { key: 'namelist', label: '黑灰白名单查询' },
     { key: 'rating', label: '评级查询' },
     { key: 'warning', label: '预警出险查询' },
@@ -482,7 +482,7 @@ function CounterpartyHoldingScene() {
     <section className="scenario-card">
       <div className="step-title">
         <span>场景</span>
-        交易对手持仓分析
+        交易对手持仓分析（万科）
       </div>
       <div className="scenario-content-grid counterparty-single-column">
         <div className="scenario-primary">
@@ -490,7 +490,7 @@ function CounterpartyHoldingScene() {
           <AssistantMessage>
             <p className="assistant-title">好的，以下是万科持仓分析结果：</p>
             <p className="assistant-text">
-              当前交易对手持仓总规模为 <strong>286.35 亿元</strong>，较上月增长 <strong>8.21%</strong>。
+              当前万科持仓总规模为 <strong>286.35 亿元</strong>，较上月增长 <strong>8.21%</strong>。
               持仓主要集中在 <strong>平安银行、平安信托、平安证券</strong> 等平安系成员公司，其中平安银行持仓规模最高；
               从三级资产类型看，持仓主要分布在 <strong>债券、信贷、零售对公</strong>，其中债券类资产占比较高。
               整体集中度处于 <strong>可控范围</strong>，建议持续关注平安系成员公司及三级资产配置变化。
@@ -582,13 +582,13 @@ function LargeCustomerMetricCard({
 }
 
 function LargeCustomerTrendPanel() {
-  const data = largeCustomerTrendData;
+  const data = largeCustomerTrendData.slice(-6);
 
   return (
     <div className="large-panel">
       <div className="analysis-heading large-chart-heading">
         <div>
-          <h2>大户数量及持仓规模趋势</h2>
+          <h2>大户数量及持仓规模趋势（近半年）</h2>
           <span>柱子为大户数量，折线为大户总持仓规模</span>
         </div>
       </div>
