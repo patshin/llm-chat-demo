@@ -15,3 +15,10 @@ dist/
 
 *.sqlite-shm
 
+*.tsbuildinfo
+
+.vite/
+
+coverage/
+
+screenshots/**/*.png

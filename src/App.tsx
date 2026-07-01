@@ -1,4 +1,5 @@
 import { Fragment, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Bot,
   CalendarDays,
@@ -15,7 +16,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import MobileApp from './mobile/MobileApp';
+import MobileDemoApp from './mobile-demo/MobileDemoApp';
 import {
   blackListItems,
   entityHitResult,
@@ -108,13 +109,30 @@ type NameListItem = {
 };
 
 function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
+  const location = useLocation();
+  const isMobileDemoRoute = location.pathname === '/mobile-demo' || window.location.pathname === '/mobile-demo';
+
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    if (nextViewMode === 'mobile') {
+      if (!isMobileDemoRoute) {
+        window.location.assign('/mobile-demo');
+      }
+      return;
+    }
+
+    if (isMobileDemoRoute || window.location.pathname !== '/') {
+      window.location.assign('/');
+    }
+  };
 
   return (
-    <>
-      <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-      {viewMode === 'desktop' ? <DesktopView /> : <MobileApp />}
-    </>
+    <div className={isMobileDemoRoute ? 'mobile-demo-route-shell' : undefined}>
+      <ViewModeToggle
+        viewMode={isMobileDemoRoute ? 'mobile' : 'desktop'}
+        onViewModeChange={handleViewModeChange}
+      />
+      {isMobileDemoRoute ? <MobileDemoApp /> : <DesktopView />}
+    </div>
   );
 }
 

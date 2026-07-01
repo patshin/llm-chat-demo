@@ -27,6 +27,7 @@ export function MobileSegmentedTabs<TValue extends string>({
           className={`mobile-demo-segmented-tab ${item.value === activeValue ? 'is-active' : ''}`.trim()}
           type="button"
           role="tab"
+          data-mobile-tab-value={item.value}
           aria-selected={item.value === activeValue}
           disabled={item.disabled}
           onClick={() => onChange(item.value)}
@@ -39,4 +40,3 @@ export function MobileSegmentedTabs<TValue extends string>({
 }
 
 export default MobileSegmentedTabs;
-

@@ -62,6 +62,22 @@ button {
   color: #fff;
 }
 
+.mobile-demo-route-shell {
+  min-height: 100vh;
+  padding-top: 62px;
+  background: #fff8f1;
+}
+
+.mobile-demo-route-shell .view-mode-toggle {
+  top: 12px;
+  right: max(16px, calc((100vw - 390px) / 2 + 16px));
+}
+
+.mobile-demo-route-shell .mobile-demo-scope,
+.mobile-demo-route-shell .mobile-demo-screen {
+  min-height: calc(100dvh - 62px);
+}
+
 .app-shell {
   display: flex;
   min-height: 100vh;
