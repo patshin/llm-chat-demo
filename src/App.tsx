@@ -258,7 +258,7 @@ function BlacklistQueryView({ onAskEntity }: { onAskEntity: () => void }) {
             <p className="assistant-text">
               截至2026-06-25，万科集团共有 <strong>155 个法人主体</strong>纳入黑名单管控，其中涉及
               <strong>黑名单 55 个</strong>、<strong>灰名单 70 个</strong>、<strong>白名单* 30 个</strong>。
-              其中，黑名单客户主要因违约、重大负面舆情、司法执行等原因入库，灰名单客户主要因为外部评级展望调整为负面、
+              其中，黑名单客户主要因违约、重大负面舆情、司法执行等原因入库，灰名单客户主要因为外部信用信息变化、
               存在短期偿债压力等原因入库。（分析由AI生成）
             </p>
           </AssistantMessage>
@@ -847,7 +847,7 @@ const singleLargeMetrics = [
   { title: '最大专业公司敞口', value: '137.01', unit: '亿元', change: '银行, 占比 48.01%' },
   { title: '出险预警金额', value: '217.82', unit: '亿元', change: '' },
   { title: '黑灰名单', value: '黑名单 4 条', unit: '', change: '灰名单 6 条' },
-  { title: '最新评级（内部）', value: '7A', unit: '', change: '2025-06-20' },
+  { title: '内部最新评级', value: '7A', unit: '', change: '2025-06-20' },
 ];
 
 function SingleLargeCustomerView() {
@@ -1126,12 +1126,13 @@ function SingleRatingTab() {
     <div className="single-tab-panel single-rating-query-panel">
       <p className="sub-summary">
         <strong>深圳华侨城股份有限公司</strong>当前<strong>内部信评</strong>最高为 <strong>3B</strong>，
-        最低为 <strong>3D</strong>；最新<strong>外部评级</strong>为 <strong>大公国际 AAA</strong>，
-        整体外部评级处于较高水平。（可模版/由AI生成）外部评级整体较稳定，但内部统一信评低于外部评级表现，
+        最低为 <strong>3D</strong>；最新<strong>外部评级结果</strong>为 <strong>AAA</strong>，评级机构为
+        <strong> 大公国际</strong>，
+        整体外部评级处于较高水平。（可模版/由AI生成）内部统一信评低于外部评级表现，
         建议关注集团内部口径下的信用风险变化。
       </p>
       <div className="analysis-card rating-analysis single-rating-analysis">
-        <div className="tabs">
+        <div className="tabs rating-tabs">
           <button className={tab === 'internal' ? 'active' : ''} onClick={() => setTab('internal')}>
             内部评级
           </button>
@@ -2307,14 +2308,14 @@ function RatingQueryView() {
           <AssistantMessage>
             <p className="answer-copy">
               <strong>深圳华侨城股份有限公司</strong>当前<strong>内部信评</strong>最高为 <strong>3B</strong>，
-              最低为 <strong>3D</strong>；最新<strong>外部评级</strong>为
-              <strong> 大公国际 AAA</strong>，整体外部评级处于较高水平。（可模版/由AI生成）外部评级整体较稳定，但内部统一信评低于外部评级表现，
+              最低为 <strong>3D</strong>；最新<strong>外部评级结果</strong>为
+              <strong> AAA</strong>，评级机构为 <strong>大公国际</strong>，整体外部评级处于较高水平。（可模版/由AI生成）内部统一信评低于外部评级表现，
               建议关注集团内部口径下的信用风险变化。
             </p>
           </AssistantMessage>
           <RatingSummaryCard />
           <div className="analysis-card rating-analysis">
-            <div className="tabs">
+            <div className="tabs rating-tabs">
               <button className={tab === 'internal' ? 'active' : ''} onClick={() => setTab('internal')}>
                 内部评级
               </button>
@@ -2368,9 +2369,9 @@ function RatingSummaryCard() {
           </div>
           <div className="rating-summary-item rating-summary-item-wide">
             <span>最新外部评级</span>
-            <strong className="rating-summary-rating">{ratingEntitySummary.latestExternalAgency} {ratingEntitySummary.latestExternalRating}</strong>
-            <div className="rating-summary-subline">评级展望：{ratingEntitySummary.latestExternalOutlook}</div>
-            <div className="rating-summary-subline">最近评级日期：{ratingEntitySummary.latestExternalDate}</div>
+            <strong className="rating-summary-rating">{ratingEntitySummary.latestExternalRating}</strong>
+            <div className="rating-summary-subline">评级机构：{ratingEntitySummary.latestExternalAgency}</div>
+            <div className="rating-summary-subline">评级日期：{ratingEntitySummary.latestExternalDate}</div>
           </div>
         </div>
       </div>
@@ -2379,96 +2380,116 @@ function RatingSummaryCard() {
 }
 
 function InternalRatingPanel() {
-  return (
-    <div className="rating-panel">
-      <InternalRatingHistoryTable />
-    </div>
-  );
-}
-
-function InternalRatingHistoryTable() {
   const sortedRecords = [...internalAnnualRatingRecords].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
 
   return (
-    <div className="table-wrap rating-history">
-      <h3>各成员公司评级</h3>
-      <table className="data-table annual-rating-table">
-        <thead>
-          <tr>
-            <th>专业公司</th>
-            <th>有效评级</th>
-            <th>评级年报年份</th>
-            <th>生效日</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="rating-panel">
+      <div className="rating-list-section">
+        <h3 className="rating-list-section-title">各成员公司评级</h3>
+        <div className="rating-list-cards">
           {sortedRecords.map((item) => (
-            <tr key={`${item.company}-${item.reportYear}-${item.effectiveDate}`}>
-              <td>{item.company}</td>
-              <td className="annual-rating-value">{item.rating}</td>
-              <td>{item.reportYear}</td>
-              <td>{item.effectiveDate}</td>
-            </tr>
+            <RatingListCard
+              key={`${item.company}-${item.reportYear}-${item.effectiveDate}`}
+              title={item.company}
+              fields={[
+                { label: '有效评级', value: item.rating, emphasized: true },
+                { label: '年报年份', value: String(item.reportYear) },
+              ]}
+            />
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }
 
 function ExternalRatingPanel({ onShowMeaning }: { onShowMeaning: () => void }) {
-  const [openAgencies, setOpenAgencies] = useState<string[]>(['大公国际']);
+  const [openAgencies, setOpenAgencies] = useState<string[]>([]);
   const toggle = (agency: string) => {
     setOpenAgencies((current) => (current.includes(agency) ? current.filter((item) => item !== agency) : [...current, agency]));
   };
 
   return (
     <div className="rating-panel">
-      <div className="external-rating-table">
-        <div className="external-head">
-          <span>评级机构</span>
-          <span>评级结果</span>
-          <span>披露日期</span>
+      <div className="rating-list-section">
+        <div className="rating-list-section-head">
+          <h3 className="rating-list-section-title">外部评级机构</h3>
+          <button className="rating-meaning-action" type="button" onClick={onShowMeaning}>
+            <HelpCircle size={15} />
+            评级含义
+          </button>
         </div>
-        {externalRatingAgencies.map((agency) => (
-          <div className="external-row-group" key={agency.agency}>
-            <div className="external-row">
-              <span>{agency.agency}</span>
-              <span className="external-rating-cell">
-                <span className="rating-badge external">{agency.rating}</span>
-                <button className="help-icon" onClick={onShowMeaning} aria-label={`${agency.agency} ${agency.rating}评级含义`}>
-                  <HelpCircle size={15} />
-                </button>
-              </span>
-              <span>{agency.date}</span>
-              <button className={`row-expand ${openAgencies.includes(agency.agency) ? 'open' : ''}`} onClick={() => toggle(agency.agency)}>
-                <ChevronDown size={18} />
-              </button>
-            </div>
-            {openAgencies.includes(agency.agency) && (
-              <div className="external-history">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>披露日期</th>
-                      <th>评级结果</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+        <div className="rating-list-cards">
+          {externalRatingAgencies.map((agency) => {
+            const isOpen = openAgencies.includes(agency.agency);
+
+            return (
+              <RatingListCard
+                key={agency.agency}
+                title={agency.agency}
+                fields={[
+                  { label: '评级结果', value: agency.rating, emphasized: true },
+                  { label: '评级日期', value: agency.date },
+                ]}
+                action={
+                  <button
+                    className={`rating-card-toggle ${isOpen ? 'open' : ''}`.trim()}
+                    type="button"
+                    onClick={() => toggle(agency.agency)}
+                    aria-label={`${agency.agency}历史评级`}
+                    aria-expanded={isOpen}
+                  >
+                    <ChevronDown size={18} />
+                  </button>
+                }
+              >
+                {isOpen ? (
+                  <div className="rating-card-history">
+                    <div className="rating-card-history-title">历史评级</div>
                     {agency.history.map((item) => (
-                      <tr key={`${agency.agency}-${item.date}`}>
-                        <td>{item.date}</td>
-                        <td><span className="rating-badge external">{item.rating}</span></td>
-                      </tr>
+                      <div className="rating-card-history-row" key={`${agency.agency}-${item.date}`}>
+                        <span>{item.date}</span>
+                        <strong>{item.rating}</strong>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ))}
+                  </div>
+                ) : null}
+              </RatingListCard>
+            );
+          })}
+        </div>
       </div>
     </div>
+  );
+}
+
+function RatingListCard({
+  title,
+  fields,
+  action,
+  children,
+}: {
+  title: string;
+  fields: Array<{ label: string; value: ReactNode; emphasized?: boolean }>;
+  action?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <article className="rating-list-card">
+      <div className="rating-list-card-head">
+        <strong>{title}</strong>
+        {action}
+      </div>
+      <div className="rating-list-info-row">
+        {fields.map((field) => (
+          <span className="rating-list-info-item" key={field.label}>
+            <em>{field.label}</em>
+            <b className={field.emphasized ? 'is-emphasized' : undefined}>{field.value}</b>
+          </span>
+        ))}
+      </div>
+      {children ? <div className="rating-list-card-extra">{children}</div> : null}
+    </article>
   );
 }
 

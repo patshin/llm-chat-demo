@@ -60,20 +60,29 @@ export const vankeMetrics = [
 
 export type NameListType = '黑名单' | '灰名单' | '白名单' | '白名单*';
 
-export const nameListStats = [
-  { type: '黑名单' as NameListType, count: 55 },
-  { type: '灰名单' as NameListType, count: 70 },
-  { type: '白名单*' as NameListType, count: 30 },
-];
+export type NameListItem = {
+  name: string;
+  reason: string;
+  date: string;
+  reporter: string;
+};
 
-export const nameListMetrics = [
-  { title: '名单库主体总数', value: '155', unit: '个', change: '较上月 +12 个', tone: 'orange' },
-  { title: '黑名单主体', value: '55', unit: '个', change: '较上月 +6 个', tone: 'black' },
-  { title: '灰名单主体', value: '70', unit: '个', change: '较上月 +4 个', tone: 'grey' },
-  { title: '白名单*主体', value: '30', unit: '个', change: '较上月 +2 个', tone: 'white' },
-];
+function expandNameListItems(seedItems: NameListItem[], targetCount: number): NameListItem[] {
+  return Array.from({ length: targetCount }, (_, index) => {
+    const seedItem = seedItems[index % seedItems.length];
 
-export const blackListItems = [
+    if (index < seedItems.length) {
+      return seedItem;
+    }
+
+    return {
+      ...seedItem,
+      name: `${seedItem.name}（样本${String(index + 1).padStart(2, '0')}）`,
+    };
+  });
+}
+
+const blackListSeedItems: NameListItem[] = [
   {
     name: '万科物业服务有限公司',
     reason: '存在违约或重大负面舆情',
@@ -106,7 +115,9 @@ export const blackListItems = [
   },
 ];
 
-export const greyListItems = [
+export const blackListItems = expandNameListItems(blackListSeedItems, 55);
+
+const greyListSeedItems: NameListItem[] = [
   {
     name: '万科物业华东区域公司',
     reason: '行业风险抬升，需持续观察',
@@ -133,7 +144,9 @@ export const greyListItems = [
   },
 ];
 
-export const whiteListItems = [
+export const greyListItems = expandNameListItems(greyListSeedItems, 70);
+
+const whiteListSeedItems: NameListItem[] = [
   {
     name: '万科物业管理（深圳）有限公司',
     reason: '经营稳健，授信履约记录良好',
@@ -152,6 +165,21 @@ export const whiteListItems = [
     date: '2025-01-12',
     reporter: '基金',
   },
+];
+
+export const whiteListItems = expandNameListItems(whiteListSeedItems, 30);
+
+export const nameListStats = [
+  { type: '黑名单' as NameListType, count: blackListItems.length },
+  { type: '灰名单' as NameListType, count: greyListItems.length },
+  { type: '白名单*' as NameListType, count: whiteListItems.length },
+];
+
+export const nameListMetrics = [
+  { title: '名单库主体总数', value: String(blackListItems.length + greyListItems.length + whiteListItems.length), unit: '个', change: '较上月 +12 个', tone: 'orange' },
+  { title: '黑名单主体', value: String(blackListItems.length), unit: '个', change: '较上月 +6 个', tone: 'black' },
+  { title: '灰名单主体', value: String(greyListItems.length), unit: '个', change: '较上月 +4 个', tone: 'grey' },
+  { title: '白名单*主体', value: String(whiteListItems.length), unit: '个', change: '较上月 +2 个', tone: 'white' },
 ];
 
 export const entityHitResult = {

@@ -6,6 +6,7 @@ export interface MobileMetricCardProps {
   value?: string;
   unit?: string;
   assist?: string;
+  assistInline?: boolean;
   badge?: string;
   badgeLevel?: MobileRiskBadgeLevel;
   extra?: ReactNode;
@@ -17,13 +18,18 @@ export function MobileMetricCard({
   value,
   unit,
   assist,
+  assistInline = false,
   badge,
   badgeLevel = 'neutral',
   extra,
   className = '',
 }: MobileMetricCardProps) {
+  const shouldShowInlineAssist = Boolean(assist && assistInline && !badge);
+
   return (
-    <article className={`mobile-demo-card mobile-demo-metric-card ${className}`.trim()}>
+    <article
+      className={`mobile-demo-card mobile-demo-metric-card ${shouldShowInlineAssist ? 'has-inline-assist' : ''} ${className}`.trim()}
+    >
       <div className="mobile-demo-card-inner">
         <p className="mobile-demo-metric-label">{label || '暂无数据'}</p>
         {badge ? (
@@ -32,9 +38,10 @@ export function MobileMetricCard({
           <div className="mobile-demo-metric-value">
             <span>{value || '暂无数据'}</span>
             {unit ? <span className="mobile-demo-metric-unit">{unit}</span> : null}
+            {shouldShowInlineAssist ? <span className="mobile-demo-metric-inline-assist">{assist}</span> : null}
           </div>
         )}
-        {assist ? <p className="mobile-demo-metric-assist">{assist}</p> : null}
+        {assist && !shouldShowInlineAssist ? <p className="mobile-demo-metric-assist">{assist}</p> : null}
         {extra}
       </div>
     </article>
@@ -42,4 +49,3 @@ export function MobileMetricCard({
 }
 
 export default MobileMetricCard;
-

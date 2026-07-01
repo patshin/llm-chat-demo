@@ -17,7 +17,6 @@ import {
   UserRoundCheck,
 } from 'lucide-react';
 import {
-  MobileAccordion,
   MobileBottomSheet,
   MobileDataCard,
   MobileHeader,
@@ -53,8 +52,6 @@ import {
   memberCompanyHoldingDetails,
   nameListStats,
   ratingEntitySummary,
-  singleLargeCustomerAssetExposure,
-  singleLargeCustomerCompanyExposure,
   singleLargeCustomerSentimentFeed,
   singleLargeCustomerWarningCompanyDistribution,
   singleLargeCustomerWarningMetrics,
@@ -95,6 +92,7 @@ type LargeCustomerSortField = 'exposure' | 'momChange' | 'ytdChange';
 type SortDirection = 'asc' | 'desc';
 type SingleLargeTab = 'holding' | 'warning' | 'rating' | 'sentiment' | 'namelist';
 type SingleHoldingView = 'company' | 'asset';
+type SingleHoldingDisplayView = 'distribution' | 'details';
 type SingleWarningView = 'summary' | 'member' | 'drilldown';
 type SheetState = { title: string; content: ReactNode } | null;
 type LargeCustomerFilters = {
@@ -114,12 +112,22 @@ type LargeCustomerTotal = {
   momChange: number;
   ytdChange: number;
 };
+type HoldingDistributionRow = (typeof holdingMemberCompanyRows)[number] | (typeof holdingAssetTypeRows)[number];
+type NameListRecord = (typeof blackListItems)[number];
+type NameListGroupId = 'black' | 'grey' | 'white';
+type NameListGroupDefinition = {
+  id: NameListGroupId;
+  title: '黑名单' | '灰名单' | '白名单*';
+  items: NameListRecord[];
+  level: MobileRiskBadgeLevel;
+};
 
 type Metric = {
   label: string;
   value?: string;
   unit?: string;
   assist?: string;
+  assistInline?: boolean;
   badge?: string;
   badgeLevel?: MobileRiskBadgeLevel;
 };
@@ -144,7 +152,21 @@ const largeCustomerSortOptions: Array<{ field: LargeCustomerSortField; label: st
   { field: 'momChange', label: '较上月' },
   { field: 'ytdChange', label: '较年初' },
 ];
-const largeCustomerPageSize = 10;
+const mainLargeCustomerPreviewCount = 10;
+const fullLargeCustomerPageSize = 20;
+const nameListPreviewCount = 5;
+const nameListSheetPageSize = 20;
+const opinionPreviewCount = 5;
+const opinionSheetPageSize = 20;
+const nameListGroupDefinitions: NameListGroupDefinition[] = [
+  { id: 'black', title: '黑名单', items: blackListItems, level: 'danger' },
+  { id: 'grey', title: '灰名单', items: greyListItems, level: 'warning' },
+  { id: 'white', title: '白名单*', items: whiteListItems, level: 'normal' },
+];
+const sentimentRiskLabels: Record<SentimentRiskLevel, string> = {
+  high: '高风险',
+  medium: '中风险',
+};
 
 const moduleCards: Array<{
   key: ModuleKey;
@@ -486,7 +508,7 @@ function NameListOverviewModule() {
 
   return (
     <>
-      <MobileSummaryCard conclusion={`当前集团名单客户共 ${total} 个，其中黑名单 ${blackCount} 个、灰名单 ${greyCount} 个、白名单* ${whiteCount} 个。黑名单客户主要集中在违约、负面舆情和经营承压场景；灰名单主要为观察类客户；白名单为当前可正常开展业务但仍需持续监控的客户。`} />
+      <MobileSummaryCard conclusion={`当前万科集团名单客户共 ${total} 个，其中黑名单 ${blackCount} 个、灰名单 ${greyCount} 个、白名单* ${whiteCount} 个。黑名单客户主要集中在违约、负面舆情和经营承压场景；灰名单主要为观察类客户；白名单为当前可正常开展业务但仍需持续监控的客户。`} />
       <MetricGrid
         metrics={[
           { label: '名单客户总量', value: String(total), unit: '个' },
@@ -498,7 +520,7 @@ function NameListOverviewModule() {
       <MobileDataCard title="名单结构" meta="按当前名单库数量计算">
         <NameListStructureList total={total} />
       </MobileDataCard>
-      <MobileDataCard title="名单详情入口" meta="展开后查看企业名称、入库原因、上报公司、入库日期。默认窗口展示前四条，剩余的上下动态翻页滑动">
+      <MobileDataCard title="名单详情入口" meta="每组默认预览前 5 条，完整名单进入弹层搜索和加载更多">
         <NameListDetailAccordions />
       </MobileDataCard>
     </>
@@ -536,16 +558,22 @@ function RatingModule({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => voi
 
   return (
     <>
-      <MobileSummaryCard conclusion="深圳华侨城股份有限公司当前内部信评最高为 3B， 最低为 3D；最新外部评级为 大公国际 AAA，整体外部评级处于较高水平。（可模版/由AI生成）外部评级整体较稳定，但内部统一信评低于外部评级表现， 建议关注集团内部口径下的信用风险变化。" />
+      <MobileSummaryCard conclusion="深圳华侨城股份有限公司当前内部信评最高为 3B， 最低为 3D；最新外部评级结果为 AAA，评级机构为大公国际，整体外部评级处于较高水平。（可模版/由AI生成）内部统一信评低于外部评级表现， 建议关注集团内部口径下的信用风险变化。" />
       <MetricGrid
         metrics={[
           { label: '最高内部信评', value: ratingEntitySummary.highestInternalRating },
           { label: '最低内部信评', value: ratingEntitySummary.lowestInternalRating },
-          { label: '最新外部评级', value: ratingEntitySummary.latestExternalRating, assist: ratingEntitySummary.latestExternalAgency },
+          {
+            label: '最新外部评级',
+            value: ratingEntitySummary.latestExternalRating,
+            assist: ratingEntitySummary.latestExternalAgency,
+            assistInline: true,
+          },
           { label: '评级日期', value: ratingEntitySummary.updatedAt },
         ]}
       />
       <MobileSegmentedTabs
+        className="mobile-demo-rating-tabs"
         ariaLabel="评级查询视图"
         activeValue={view}
         items={[
@@ -555,7 +583,7 @@ function RatingModule({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => voi
         onChange={setView}
       />
       {view === 'internal' && (
-        <MobileDataCard title="平安集团各专业公司最新评级值">
+        <MobileDataCard title="各成员公司评级">
           <CompactInternalRatingCards />
         </MobileDataCard>
       )}
@@ -651,15 +679,20 @@ function LargeCustomerModule() {
   const [draftFilters, setDraftFilters] = useState<LargeCustomerFilters>(defaultLargeCustomerFilters);
   const [sort, setSort] = useState<LargeCustomerSort>({ field: 'exposure', direction: 'desc' });
   const [draftSort, setDraftSort] = useState<LargeCustomerSort>({ field: 'exposure', direction: 'desc' });
-  const [visibleLargeCustomerCount, setVisibleLargeCustomerCount] = useState(largeCustomerPageSize);
+  const [fullListOpen, setFullListOpen] = useState(false);
+  const [fullListVisibleCount, setFullListVisibleCount] = useState(fullLargeCustomerPageSize);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const filteredLargeCustomers = useMemo(() => {
     return sortLargeCustomerRows(filterLargeCustomerRows(largeCustomerTableData, filters), sort);
   }, [filters, sort]);
-  const visibleLargeCustomers = useMemo(
-    () => filteredLargeCustomers.slice(0, visibleLargeCustomerCount),
-    [filteredLargeCustomers, visibleLargeCustomerCount],
+  const mainPreviewLargeCustomers = useMemo(
+    () => filteredLargeCustomers.slice(0, mainLargeCustomerPreviewCount),
+    [filteredLargeCustomers],
+  );
+  const fullListLargeCustomers = useMemo(
+    () => filteredLargeCustomers.slice(0, fullListVisibleCount),
+    [filteredLargeCustomers, fullListVisibleCount],
   );
   const draftFilterPreviewCount = useMemo(
     () => filterLargeCustomerRows(largeCustomerTableData, draftFilters).length,
@@ -671,10 +704,11 @@ function LargeCustomerModule() {
   );
   const activeFilterCount = countLargeCustomerFilters(filters);
   const sortLabel = `${largeCustomerSortLabel(sort.field)} ${sort.direction === 'desc' ? '↓' : '↑'}`;
-  const hasMoreLargeCustomers = visibleLargeCustomers.length < filteredLargeCustomers.length;
-  const nextLargeCustomerCount = Math.min(largeCustomerPageSize, filteredLargeCustomers.length - visibleLargeCustomers.length);
+  const shouldShowFullListEntry = filteredLargeCustomers.length > mainLargeCustomerPreviewCount;
+  const hasMoreFullListCustomers = fullListLargeCustomers.length < filteredLargeCustomers.length;
+  const nextFullListCount = Math.min(fullLargeCustomerPageSize, filteredLargeCustomers.length - fullListLargeCustomers.length);
   useEffect(() => {
-    setVisibleLargeCustomerCount(largeCustomerPageSize);
+    setFullListVisibleCount(fullLargeCustomerPageSize);
   }, [filters, sort]);
   const openFilterSheet = () => {
     setDraftFilters(filters);
@@ -688,21 +722,25 @@ function LargeCustomerModule() {
     setDraftFilters(defaultLargeCustomerFilters);
   };
   const applyFilters = () => {
-    setVisibleLargeCustomerCount(largeCustomerPageSize);
+    setFullListVisibleCount(fullLargeCustomerPageSize);
     setFilters(draftFilters);
     setFilterOpen(false);
   };
   const applySort = () => {
-    setVisibleLargeCustomerCount(largeCustomerPageSize);
+    setFullListVisibleCount(fullLargeCustomerPageSize);
     setSort(draftSort);
     setSortOpen(false);
   };
   const updateSearchKeyword = (keyword: string) => {
-    setVisibleLargeCustomerCount(largeCustomerPageSize);
+    setFullListVisibleCount(fullLargeCustomerPageSize);
     setFilters((currentFilters) => ({ ...currentFilters, keyword }));
   };
-  const loadMoreLargeCustomers = () => {
-    setVisibleLargeCustomerCount((currentCount) => Math.min(currentCount + largeCustomerPageSize, filteredLargeCustomers.length));
+  const openFullCustomerList = () => {
+    setFullListVisibleCount(fullLargeCustomerPageSize);
+    setFullListOpen(true);
+  };
+  const loadMoreFullListCustomers = () => {
+    setFullListVisibleCount((currentCount) => Math.min(currentCount + fullLargeCustomerPageSize, filteredLargeCustomers.length));
   };
 
   return (
@@ -754,22 +792,38 @@ function LargeCustomerModule() {
           />
           <LargeCustomerFilterTotalCard total={filteredLargeCustomerTotal} />
           <div className="mobile-demo-large-list-toolbar">
-            <span>{formatLargeCustomerListStatus(filteredLargeCustomers.length, visibleLargeCustomers.length)}</span>
+            <span>{formatLargeCustomerPreviewStatus(filteredLargeCustomers.length, mainPreviewLargeCustomers.length)}</span>
             <em>排序：{sortLabel}</em>
           </div>
-          <LargeCustomerCards rows={visibleLargeCustomers} />
-          {hasMoreLargeCustomers ? (
-            <button className="mobile-demo-large-load-more" type="button" onClick={loadMoreLargeCustomers}>
-              加载更多 {nextLargeCustomerCount} 家
-              <ChevronDown size={16} />
+          <LargeCustomerCards rows={mainPreviewLargeCustomers} />
+          {shouldShowFullListEntry ? (
+            <button className="mobile-demo-large-load-more" type="button" onClick={openFullCustomerList}>
+              查看全部 {filteredLargeCustomers.length} 家
+              <ChevronRight size={16} />
             </button>
           ) : (
             <button className="mobile-demo-large-load-more is-complete" type="button" disabled>
-              {filteredLargeCustomers.length > 0 ? `已显示全部 ${filteredLargeCustomers.length} 家` : '暂无匹配客户'}
+              {filteredLargeCustomers.length > 0 ? `已显示全部 ${filteredLargeCustomers.length} 家` : '暂无可展示客户'}
             </button>
           )}
         </MobileDataCard>
       )}
+      <MobileBottomSheet open={fullListOpen} title="全部大户客户" onClose={() => setFullListOpen(false)}>
+        <LargeCustomerFullListSheet
+          filterCount={activeFilterCount}
+          keyword={filters.keyword}
+          sortLabel={sortLabel}
+          totalCount={filteredLargeCustomers.length}
+          visibleCount={fullListLargeCustomers.length}
+          rows={fullListLargeCustomers}
+          hasMore={hasMoreFullListCustomers}
+          nextCount={nextFullListCount}
+          onKeywordChange={updateSearchKeyword}
+          onOpenFilter={openFilterSheet}
+          onOpenSort={openSortSheet}
+          onLoadMore={loadMoreFullListCustomers}
+        />
+      </MobileBottomSheet>
       <MobileBottomSheet open={filterOpen} title="筛选大户客户" onClose={() => setFilterOpen(false)}>
         <LargeCustomerFilterSheet
           draftFilters={draftFilters}
@@ -793,24 +847,50 @@ function LargeCustomerModule() {
 
 function SingleLargeCustomerModule({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => void }) {
   const [tab, setTab] = useState<SingleLargeTab>('holding');
+  const singleLargeMetricCards: Metric[] = [
+    {
+      label: singleLargeMetrics[0].title,
+      value: singleLargeMetrics[0].value,
+      unit: singleLargeMetrics[0].unit,
+      assist: [singleLargeMetrics[0].change, singleLargeMetrics[0].subChange].filter(Boolean).join('\n'),
+    },
+    {
+      label: singleLargeMetrics[1].title,
+      value: singleLargeMetrics[1].value,
+      unit: singleLargeMetrics[1].unit,
+      assist: singleLargeMetrics[1].change,
+    },
+    {
+      label: singleLargeMetrics[2].title,
+      value: singleLargeMetrics[2].value,
+      unit: singleLargeMetrics[2].unit,
+      assist: `含出险金额 ${formatRiskNumber(singleLargeCustomerWarningMetrics.defaulted)}亿元`,
+    },
+    {
+      label: '黑灰名单命中',
+      value: singleLargeMetrics[3].value,
+      unit: singleLargeMetrics[3].unit,
+      assist: singleLargeMetrics[3].change,
+    },
+    {
+      label: singleLargeMetrics[4].title,
+      value: singleLargeMetrics[4].value,
+      unit: singleLargeMetrics[4].unit,
+      assist: singleLargeMetrics[4].change,
+    },
+  ];
 
   return (
     <>
-      <MobileSummaryCard conclusion="万科企业集团当前为重点管理大户，整体持仓规模为 285.53 亿元，并命中黑名单及灰名单记录。" />
-      <MetricScroller
-        metrics={singleLargeMetrics.slice(0, 4).map((item) => ({
-          label: item.title,
-          value: item.value,
-          unit: item.unit,
-          assist: [item.change, item.subChange].filter(Boolean).join(' / '),
-        }))}
-      />
+      <MobileSummaryCard conclusion="万科企业集团当前为重点管理大户，整体持仓规模为 285.53 亿元，主要分布在银行、不动产和资产管理等专业公司；出险预警金额较高，评级存在一定承压迹象，并命中黑名单及灰名单记录。 建议持续关注持仓结构、预警出险变化、评级迁徙及负面舆情变化。" />
+      <SingleLargeMetricGrid metrics={singleLargeMetricCards} />
       <MobileSegmentedTabs
+        className="mobile-demo-main-tabs"
         ariaLabel="单一大户查询 tab"
         activeValue={tab}
         items={[
-          { value: 'holding', label: '持仓规模' },
-          { value: 'warning', label: '出险预警' },
+          { value: 'holding', label: '持仓' },
+          { value: 'warning', label: '出险' },
           { value: 'rating', label: '评级' },
           { value: 'sentiment', label: '舆情' },
           { value: 'namelist', label: '黑灰名单' },
@@ -820,10 +900,10 @@ function SingleLargeCustomerModule({ onOpenSheet }: { onOpenSheet: (sheet: Sheet
       {tab === 'holding' && <SingleHoldingPanel />}
       {tab === 'warning' && <SingleWarningPanel />}
       {tab === 'rating' && <SingleRatingPanel onOpenSheet={onOpenSheet} />}
-      {tab === 'sentiment' && <SingleSentimentPanel onOpenSheet={onOpenSheet} />}
+      {tab === 'sentiment' && <SingleSentimentPanel />}
       {tab === 'namelist' && (
-        <MobileDataCard title="黑灰名单详情" meta="当前桌面单一大户 tab 复用全局 NameListDetails 数据">
-          <NameListAccordions />
+        <MobileDataCard title="黑灰名单详情" meta="每组默认预览前 5 条，完整名单进入弹层搜索和加载更多">
+          <SingleLargeNameListAccordions />
         </MobileDataCard>
       )}
     </>
@@ -832,34 +912,172 @@ function SingleLargeCustomerModule({ onOpenSheet }: { onOpenSheet: (sheet: Sheet
 
 function SingleHoldingPanel() {
   const [view, setView] = useState<SingleHoldingView>('company');
+  const [displayView, setDisplayView] = useState<SingleHoldingDisplayView>('distribution');
+  const [expandedName, setExpandedName] = useState<string | null>(null);
   const rows = view === 'company' ? holdingMemberCompanyRows : holdingAssetTypeRows;
+  const distributionTitle = view === 'company' ? '成员公司持仓分布' : '资产类型持仓分布';
+  const distributionMeta = displayView === 'distribution'
+    ? '按持仓规模排序，展示金额与整体占比'
+    : '点击条目查看分法人公司和产品明细';
+  const changeView = (nextView: SingleHoldingView) => {
+    setView(nextView);
+    setExpandedName(null);
+  };
+  const changeDisplayView = (nextDisplayView: SingleHoldingDisplayView) => {
+    setDisplayView(nextDisplayView);
+    setExpandedName(null);
+  };
+  const toggleExpandedName = (name: string) => {
+    setExpandedName((currentName) => (currentName === name ? null : name));
+  };
 
   return (
-    <MobileDataCard title={view === 'company' ? '成员公司分布' : '资产类型分布'} meta="单位：亿元；明细通过折叠查看">
-      <MobileSegmentedTabs
-        ariaLabel="持仓规模维度"
-        activeValue={view}
-        items={[
-          { value: 'company', label: '成员公司' },
-          { value: 'asset', label: '资产类型' },
-        ]}
-        onChange={setView}
-      />
-      <HorizontalBarList
-        data={(view === 'company' ? singleLargeCustomerCompanyExposure : singleLargeCustomerAssetExposure).map((item) => ({
-          label: item.name,
-          value: item.value,
-        }))}
-        unit="亿元"
-      />
-      <MobileAccordion
-        items={rows.map((item) => ({
-          id: item.name,
-          title: `${item.name} ${item.amount} 亿元 / ${item.ratio}`,
-          children: <HoldingDetails dimension={view} name={item.name} />,
-        }))}
-      />
+    <MobileDataCard className="mobile-demo-holding-card" title="持仓规模总览">
+      <HoldingOverviewSummary />
+      <div className="mobile-demo-holding-controls">
+        <div className="mobile-demo-holding-control-layer">
+          <span className="mobile-demo-holding-control-label">分析维度</span>
+          <MobileSegmentedTabs
+            className="mobile-demo-holding-dimension-tabs"
+            ariaLabel="持仓规模维度"
+            activeValue={view}
+            items={[
+              { value: 'company', label: '成员公司' },
+              { value: 'asset', label: '资产类型' },
+            ]}
+            onChange={changeView}
+          />
+        </div>
+        <div className="mobile-demo-holding-control-layer">
+          <span className="mobile-demo-holding-control-label">展示方式</span>
+          <MobileSegmentedTabs
+            className="mobile-demo-holding-display-tabs"
+            ariaLabel="持仓展示方式"
+            activeValue={displayView}
+            items={[
+              { value: 'distribution', label: '分布概览' },
+              { value: 'details', label: '明细穿透' },
+            ]}
+            onChange={changeDisplayView}
+          />
+        </div>
+      </div>
+      <div className="mobile-demo-holding-analysis">
+        <div className="mobile-demo-holding-analysis-head">
+          <h3>{distributionTitle}</h3>
+          <p>{distributionMeta}</p>
+        </div>
+        {displayView === 'distribution' ? (
+          <HoldingDistributionList rows={rows} />
+        ) : (
+          <HoldingDetailAccordion
+            rows={rows}
+            dimension={view}
+            expandedName={expandedName}
+            onToggle={toggleExpandedName}
+          />
+        )}
+      </div>
     </MobileDataCard>
+  );
+}
+
+function HoldingOverviewSummary() {
+  const totalMetric = singleLargeMetrics[0];
+  const topCompany = holdingMemberCompanyRows[0];
+  const topAsset = holdingAssetTypeRows[0];
+  const overviewItems = [
+    { label: '总持仓规模', value: totalMetric.value, suffix: totalMetric.unit },
+    { label: '最大成员公司', value: `${topCompany.name} ${formatHoldingAmount(topCompany.amount)}`, suffix: '亿元' },
+    { label: '最大资产类型', value: `${topAsset.name} ${formatHoldingAmount(topAsset.amount)}`, suffix: '亿元' },
+  ];
+
+  return (
+    <div className="mobile-demo-holding-overview-grid" aria-label="持仓规模总览指标">
+      {overviewItems.map((item) => (
+        <div className="mobile-demo-holding-overview-item" key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+          <em>{item.suffix}</em>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HoldingDistributionList({ rows }: { rows: HoldingDistributionRow[] }) {
+  return (
+    <div className="mobile-demo-holding-distribution-list">
+      {rows.map((item, index) => {
+        const percent = parseHoldingRatio(item.ratio);
+        const width = Math.min(100, Math.max(percent, item.amount > 0 ? 2 : 0));
+
+        return (
+          <article className="mobile-demo-holding-rank-row" key={item.name}>
+            <div className="mobile-demo-holding-rank-main">
+              <span className="mobile-demo-holding-rank-name">
+                <i className={`mobile-demo-holding-rank-dot ${index < 3 ? 'is-top-three' : ''}`.trim()}>{index + 1}</i>
+                <strong>{item.name}</strong>
+              </span>
+              <span className="mobile-demo-holding-amount">
+                <strong>{formatHoldingAmount(item.amount)}</strong>
+                <em>亿元</em>
+              </span>
+            </div>
+            <span className="mobile-demo-holding-ratio-chip">占整体 {item.ratio}</span>
+            <div className="mobile-demo-holding-progress" aria-hidden="true">
+              <i style={{ width: `${width}%` }} />
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function HoldingDetailAccordion({
+  rows,
+  dimension,
+  expandedName,
+  onToggle,
+}: {
+  rows: HoldingDistributionRow[];
+  dimension: SingleHoldingView;
+  expandedName: string | null;
+  onToggle: (name: string) => void;
+}) {
+  return (
+    <div className="mobile-demo-holding-detail-accordion">
+      {rows.map((item) => {
+        const isOpen = expandedName === item.name;
+
+        return (
+          <section className={`mobile-demo-holding-detail-item ${isOpen ? 'is-open' : ''}`.trim()} key={item.name}>
+            <button
+              className="mobile-demo-holding-detail-toggle"
+              type="button"
+              aria-expanded={isOpen}
+              onClick={() => onToggle(item.name)}
+            >
+              <span className="mobile-demo-holding-detail-left">
+                <strong>{item.name}</strong>
+                <em>占整体 {item.ratio}</em>
+              </span>
+              <span className="mobile-demo-holding-detail-right">
+                <strong>{formatHoldingAmount(item.amount)}</strong>
+                <em>亿元</em>
+              </span>
+              <ChevronDown className="mobile-demo-accordion-chevron" size={18} />
+            </button>
+            {isOpen ? (
+              <div className="mobile-demo-holding-detail-body">
+                <HoldingDetails dimension={dimension} name={item.name} />
+              </div>
+            ) : null}
+          </section>
+        );
+      })}
+    </div>
   );
 }
 
@@ -867,7 +1085,7 @@ function SingleWarningPanel() {
   const [view, setView] = useState<SingleWarningView>('summary');
 
   return (
-    <MobileDataCard title="单一大户出险预警" meta="五类数据互斥展示在当前 tab 内">
+    <MobileDataCard title="单一大户出险预警" meta="出险、重大预警、二级预警按集团和成员公司口径展示">
       <MobileSegmentedTabs
         ariaLabel="单一大户预警视图"
         activeValue={view}
@@ -900,13 +1118,15 @@ function SingleWarningPanel() {
 
 function SingleRatingPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => void }) {
   const [view, setView] = useState<RatingView>('internal');
+  const isInternalView = view === 'internal';
 
   return (
     <MobileDataCard
-      title="评级"
-      meta="桌面单一大户评级 tab 复用评级查询数据"
+      className="mobile-demo-single-rating-card"
+      title={isInternalView ? '各成员公司评级' : '外部评级机构'}
+      meta={isInternalView ? undefined : '外部评级按评级机构展示，可展开查看历史评级'}
       action={
-        view === 'external' ? (
+        isInternalView ? null : (
           <button
             className="mobile-demo-text-action"
             type="button"
@@ -914,10 +1134,11 @@ function SingleRatingPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) =
           >
             评级含义
           </button>
-        ) : null
+        )
       }
     >
       <MobileSegmentedTabs
+        className="mobile-demo-rating-tabs"
         ariaLabel="单一大户评级视图"
         activeValue={view}
         items={[
@@ -926,24 +1147,17 @@ function SingleRatingPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) =
         ]}
         onChange={setView}
       />
-      {view === 'internal' ? <InternalRatingCards /> : <ExternalRatingAccordions />}
+      {isInternalView ? <CompactInternalRatingCards /> : <ExternalRatingAccordions />}
     </MobileDataCard>
   );
 }
 
-function SingleSentimentPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => void }) {
+function SingleSentimentPanel() {
   const [level, setLevel] = useState<SentimentRiskLevel>('high');
   const items = singleLargeCustomerSentimentFeed[level];
 
   return (
-    <MobileDataCard title="舆情信息流" meta="仅展示高风险 / 中风险信息流，不恢复正负中性趋势图">
-      <MetricMiniGrid
-        metrics={[
-          { label: '近一个月舆情', value: '18', unit: '条' },
-          { label: '高风险舆情', value: '5', unit: '条' },
-          { label: '中风险舆情', value: '13', unit: '条' },
-        ]}
-      />
+    <MobileDataCard title="舆情信息流" meta="默认展示最新前 5 条，完整舆情进入弹层搜索和加载更多">
       <MobileSegmentedTabs
         ariaLabel="舆情风险等级"
         activeValue={level}
@@ -953,36 +1167,208 @@ function SingleSentimentPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState
         ]}
         onChange={setLevel}
       />
-      <div className="mobile-demo-feed-list">
-        {items.map((item) => (
-          <button
-            className="mobile-demo-feed-card"
-            key={item.title}
-            type="button"
-            onClick={() =>
-              onOpenSheet({
-                title: '舆情详情',
-                content: <SentimentDetail item={item} />,
-              })
-            }
-          >
-            <span className={`mobile-demo-feed-level level-${item.level}`}>{item.level === 'high' ? '高风险' : '中风险'}</span>
-            <strong>{item.title}</strong>
-            <span>{item.customer} / {item.date}</span>
-            <em>{item.summary}</em>
-          </button>
-        ))}
-      </div>
+      <OpinionPreviewList riskType={level} items={items} itemsByRisk={singleLargeCustomerSentimentFeed} />
     </MobileDataCard>
   );
 }
 
-function MetricScroller({ metrics }: { metrics: Metric[] }) {
+function OpinionPreviewList({
+  riskType,
+  items,
+  itemsByRisk,
+  previewCount = opinionPreviewCount,
+  sheetPageSize = opinionSheetPageSize,
+}: {
+  riskType: SentimentRiskLevel;
+  items: SentimentFeedItem[];
+  itemsByRisk: Record<SentimentRiskLevel, SentimentFeedItem[]>;
+  previewCount?: number;
+  sheetPageSize?: number;
+}) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetRiskType, setSheetRiskType] = useState<SentimentRiskLevel>(riskType);
+  const [searchValue, setSearchValue] = useState('');
+  const [visibleCount, setVisibleCount] = useState(sheetPageSize);
+  const previewItems = useMemo(() => sortOpinionItemsByDate(items).slice(0, previewCount), [items, previewCount]);
+  const sheetItems = useMemo(() => sortOpinionItemsByDate(itemsByRisk[sheetRiskType]), [itemsByRisk, sheetRiskType]);
+  const filteredItems = useMemo(() => filterOpinionItems(sheetItems, searchValue), [sheetItems, searchValue]);
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const hasPreviewOverflow = items.length > previewCount;
+  const hasMore = visibleItems.length < filteredItems.length;
+  const nextCount = Math.min(sheetPageSize, filteredItems.length - visibleItems.length);
+  const riskLabel = sentimentRiskLabels[riskType];
+  const sheetRiskLabel = sentimentRiskLabels[sheetRiskType];
+
+  const openFullSheet = () => {
+    setSheetRiskType(riskType);
+    setSearchValue('');
+    setVisibleCount(sheetPageSize);
+    setSheetOpen(true);
+  };
+
+  const updateSearchValue = (value: string) => {
+    setSearchValue(value);
+    setVisibleCount(sheetPageSize);
+  };
+
+  const updateSheetRiskType = (nextRiskType: SentimentRiskLevel) => {
+    setSheetRiskType(nextRiskType);
+    setVisibleCount(sheetPageSize);
+  };
+
+  const loadMoreItems = () => {
+    setVisibleCount((currentCount) => Math.min(currentCount + sheetPageSize, filteredItems.length));
+  };
+
   return (
-    <section className="mobile-demo-metric-row" aria-label="核心指标">
-      {metrics.slice(0, 4).map((metric) => (
-        <MobileMetricCard key={metric.label} {...metric} />
-      ))}
+    <div className="mobile-demo-feed-list mobile-demo-opinion-preview-list">
+      {previewItems.length ? (
+        previewItems.map((item) => <OpinionFeedCard key={`${item.level}-${item.title}-${item.date}`} item={item} />)
+      ) : (
+        <p className="mobile-demo-empty">暂无舆情信息</p>
+      )}
+      {hasPreviewOverflow ? (
+        <button className="mobile-demo-opinion-view-all" type="button" onClick={openFullSheet}>
+          查看全部{riskLabel} {items.length} 条
+          <ChevronRight size={16} />
+        </button>
+      ) : previewItems.length ? (
+        <div className="mobile-demo-opinion-complete">已显示全部 {items.length} 条</div>
+      ) : null}
+      <MobileBottomSheet open={sheetOpen} title={`全部${sheetRiskLabel}舆情`} onClose={() => setSheetOpen(false)}>
+        <OpinionFullSheet
+          riskType={sheetRiskType}
+          items={visibleItems}
+          searchValue={searchValue}
+          filteredCount={filteredItems.length}
+          visibleCount={visibleItems.length}
+          hasMore={hasMore}
+          nextCount={nextCount}
+          onRiskTypeChange={updateSheetRiskType}
+          onSearchChange={updateSearchValue}
+          onLoadMore={loadMoreItems}
+        />
+      </MobileBottomSheet>
+    </div>
+  );
+}
+
+function OpinionFullSheet({
+  riskType,
+  items,
+  searchValue,
+  filteredCount,
+  visibleCount,
+  hasMore,
+  nextCount,
+  onRiskTypeChange,
+  onSearchChange,
+  onLoadMore,
+}: {
+  riskType: SentimentRiskLevel;
+  items: SentimentFeedItem[];
+  searchValue: string;
+  filteredCount: number;
+  visibleCount: number;
+  hasMore: boolean;
+  nextCount: number;
+  onRiskTypeChange: (riskType: SentimentRiskLevel) => void;
+  onSearchChange: (value: string) => void;
+  onLoadMore: () => void;
+}) {
+  const riskLabel = sentimentRiskLabels[riskType];
+
+  return (
+    <section className="mobile-demo-opinion-full-sheet">
+      <label className="mobile-demo-opinion-search">
+        <Search size={17} />
+        <input
+          value={searchValue}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="搜索标题 / 摘要 / 日期"
+        />
+      </label>
+      <MobileSegmentedTabs
+        className="mobile-demo-opinion-sheet-tabs"
+        ariaLabel="全量舆情风险等级"
+        activeValue={riskType}
+        items={[
+          { value: 'high', label: '高风险' },
+          { value: 'medium', label: '中风险' },
+        ]}
+        onChange={onRiskTypeChange}
+      />
+      <div className="mobile-demo-opinion-sheet-status">
+        <strong>当前{riskLabel} {filteredCount} 条</strong>
+        <span>{formatOpinionVisibleStatus(filteredCount, visibleCount)}</span>
+      </div>
+      {items.length ? (
+        <>
+          <div className="mobile-demo-opinion-sheet-list">
+            {items.map((item) => <OpinionFeedCard key={`sheet-${item.level}-${item.title}-${item.date}`} item={item} />)}
+          </div>
+          {hasMore ? (
+            <button className="mobile-demo-large-load-more" type="button" onClick={onLoadMore}>
+              加载更多 {nextCount} 条
+              <ChevronDown size={16} />
+            </button>
+          ) : (
+            <button className="mobile-demo-large-load-more is-complete" type="button" disabled>
+              已显示全部 {filteredCount} 条
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="mobile-demo-large-empty">
+          <strong>暂无匹配舆情</strong>
+          <span>请调整搜索关键词或风险类型</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function OpinionFeedCard({ item }: { item: SentimentFeedItem }) {
+  return (
+    <article className="mobile-demo-feed-card mobile-demo-opinion-card">
+      <span className={`mobile-demo-feed-level level-${item.level}`}>{sentimentRiskLabels[item.level]}</span>
+      <strong>{item.title}</strong>
+      <span className="mobile-demo-opinion-meta">{item.customer} / {item.date}</span>
+      <em>{item.summary}</em>
+    </article>
+  );
+}
+
+function sortOpinionItemsByDate(items: SentimentFeedItem[]) {
+  return [...items].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function filterOpinionItems(items: SentimentFeedItem[], searchValue: string) {
+  const keyword = searchValue.trim().toLowerCase();
+
+  if (!keyword) {
+    return items;
+  }
+
+  return items.filter((item) => (
+    [item.title, item.summary, item.customer, item.date].some((value) => value.toLowerCase().includes(keyword))
+  ));
+}
+
+function formatOpinionVisibleStatus(totalCount: number, visibleCount: number) {
+  if (totalCount === 0) return '已显示 0 / 0';
+  if (visibleCount >= totalCount) return `已显示全部 ${totalCount} 条`;
+  return `已显示 1-${visibleCount} / ${totalCount}`;
+}
+
+function SingleLargeMetricGrid({ metrics }: { metrics: Metric[] }) {
+  return (
+    <section className="mobile-demo-single-metric-section" aria-label="单一大户核心指标">
+      <div className="mobile-demo-single-metric-grid">
+        {metrics.map((metric) => (
+          <MobileMetricCard key={metric.label} {...metric} className="mobile-demo-single-metric" />
+        ))}
+      </div>
     </section>
   );
 }
@@ -1187,7 +1573,7 @@ function CounterpartyStackedList() {
 }
 
 function getNameListCount(typePrefix: '黑名单' | '灰名单' | '白名单') {
-  return nameListStats.find((item) => item.type.startsWith(typePrefix))?.count ?? 0;
+  return nameListGroupDefinitions.find((group) => group.title.startsWith(typePrefix))?.items.length ?? 0;
 }
 
 function formatShare(value: number, total: number) {
@@ -1228,40 +1614,226 @@ function NameListStructureList({ total }: { total: number }) {
 }
 
 function NameListDetailAccordions() {
-  const groups = [
-    { id: 'black-detail', title: '黑名单详情', records: blackListItems, level: 'danger' as const },
-    { id: 'grey-detail', title: '灰名单详情', records: greyListItems, level: 'warning' as const },
-    { id: 'white-detail', title: '白名单详情', records: whiteListItems, level: 'normal' as const },
-  ];
+  return <NameListPreviewGroups />;
+}
+
+function NameListAccordions() {
+  return <NameListPreviewGroups />;
+}
+
+function SingleLargeNameListAccordions() {
+  return <NameListPreviewGroups />;
+}
+
+function NameListPreviewGroups() {
+  return (
+    <div className="mobile-demo-single-namelist mobile-demo-namelist-preview-list">
+      {nameListGroupDefinitions.map((group, index) => (
+        <NameListPreviewSection
+          key={group.id}
+          groupId={group.id}
+          title={group.title}
+          items={group.items}
+          level={group.level}
+          defaultExpanded={index === 0}
+        />
+      ))}
+    </div>
+  );
+}
+
+function NameListPreviewSection({
+  groupId,
+  title,
+  items,
+  level,
+  previewCount = nameListPreviewCount,
+  sheetPageSize = nameListSheetPageSize,
+  defaultExpanded = false,
+}: {
+  groupId: NameListGroupId;
+  title: NameListGroupDefinition['title'];
+  items: NameListRecord[];
+  level: MobileRiskBadgeLevel;
+  previewCount?: number;
+  sheetPageSize?: number;
+  defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [visibleCount, setVisibleCount] = useState(sheetPageSize);
+  const previewItems = items.slice(0, previewCount);
+  const filteredItems = useMemo(() => filterNameListItems(items, searchValue), [items, searchValue]);
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const hasMore = visibleItems.length < filteredItems.length;
+  const nextCount = Math.min(sheetPageSize, filteredItems.length - visibleItems.length);
+  const hasPreviewOverflow = items.length > previewCount;
+  const groupSummaryId = `namelist-${groupId}-summary`;
+  const groupBodyId = `namelist-${groupId}-body`;
+
+  const openFullSheet = () => {
+    setSearchValue('');
+    setVisibleCount(sheetPageSize);
+    setSheetOpen(true);
+  };
+
+  const updateSearchValue = (value: string) => {
+    setSearchValue(value);
+    setVisibleCount(sheetPageSize);
+  };
+
+  const loadMoreItems = () => {
+    setVisibleCount((currentCount) => Math.min(currentCount + sheetPageSize, filteredItems.length));
+  };
 
   return (
-    <MobileAccordion
-      items={groups.map((group) => ({
-        id: group.id,
-        title: group.title,
-        children: (
-          <div className="mobile-demo-record-list">
-            {group.records.map((record) => (
-              <article className="mobile-demo-record-card mobile-demo-compact-record" key={`${record.name}-${record.date}`}>
-                <div className="mobile-demo-row-head">
-                  <strong>{record.name}</strong>
-                  <MobileRiskBadge level={group.level}>{record.reporter}</MobileRiskBadge>
-                </div>
-                <KeyValueList
-                  rows={[
-                    ['企业名称', record.name],
-                    ['入库原因', record.reason],
-                    ['上报公司', record.reporter],
-                    ['入库日期', record.date],
-                  ]}
-                />
-              </article>
-            ))}
-          </div>
-        ),
-      }))}
-    />
+    <section className={`mobile-demo-single-namelist-group mobile-demo-namelist-preview-section is-${groupId} is-${expanded ? 'open' : 'closed'}`.trim()}>
+      <button
+        className="mobile-demo-namelist-preview-head"
+        id={groupSummaryId}
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={groupBodyId}
+        onClick={() => setExpanded((current) => !current)}
+      >
+        <span>
+          <strong>{title}</strong>
+          <em>{items.length} 个</em>
+        </span>
+        <ChevronDown className="mobile-demo-accordion-chevron" size={18} />
+      </button>
+      {expanded ? (
+        <div className="mobile-demo-single-namelist-body" id={groupBodyId} role="region" aria-labelledby={groupSummaryId}>
+          {previewItems.length ? (
+            previewItems.map((item) => <NameListItemCard key={`${title}-${item.name}-${item.date}`} item={item} level={level} />)
+          ) : (
+            <p className="mobile-demo-empty">暂无名单明细</p>
+          )}
+          {hasPreviewOverflow ? (
+            <button className="mobile-demo-namelist-view-all" type="button" onClick={openFullSheet}>
+              查看全部{title} {items.length} 条
+              <ChevronRight size={16} />
+            </button>
+          ) : previewItems.length ? (
+            <div className="mobile-demo-namelist-complete">已显示全部 {items.length} 条</div>
+          ) : null}
+        </div>
+      ) : null}
+      <MobileBottomSheet open={sheetOpen} title={`全部${title}`} onClose={() => setSheetOpen(false)}>
+        <NameListFullSheet
+          title={title}
+          items={visibleItems}
+          level={level}
+          searchValue={searchValue}
+          filteredCount={filteredItems.length}
+          visibleCount={visibleItems.length}
+          hasMore={hasMore}
+          nextCount={nextCount}
+          onSearchChange={updateSearchValue}
+          onLoadMore={loadMoreItems}
+        />
+      </MobileBottomSheet>
+    </section>
   );
+}
+
+function NameListFullSheet({
+  title,
+  items,
+  level,
+  searchValue,
+  filteredCount,
+  visibleCount,
+  hasMore,
+  nextCount,
+  onSearchChange,
+  onLoadMore,
+}: {
+  title: NameListGroupDefinition['title'];
+  items: NameListRecord[];
+  level: MobileRiskBadgeLevel;
+  searchValue: string;
+  filteredCount: number;
+  visibleCount: number;
+  hasMore: boolean;
+  nextCount: number;
+  onSearchChange: (value: string) => void;
+  onLoadMore: () => void;
+}) {
+  return (
+    <section className="mobile-demo-namelist-full-sheet">
+      <label className="mobile-demo-namelist-search">
+        <Search size={17} />
+        <input
+          value={searchValue}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="搜索企业名称 / 入库原因"
+        />
+      </label>
+      <div className="mobile-demo-namelist-sheet-status">
+        <strong>{title} {filteredCount} 条</strong>
+        <span>{formatNameListVisibleStatus(filteredCount, visibleCount)}</span>
+      </div>
+      {items.length ? (
+        <>
+          <div className="mobile-demo-namelist-sheet-list">
+            {items.map((item) => <NameListItemCard key={`sheet-${title}-${item.name}-${item.date}`} item={item} level={level} />)}
+          </div>
+          {hasMore ? (
+            <button className="mobile-demo-large-load-more" type="button" onClick={onLoadMore}>
+              加载更多 {nextCount} 条
+              <ChevronDown size={16} />
+            </button>
+          ) : (
+            <button className="mobile-demo-large-load-more is-complete" type="button" disabled>
+              已显示全部 {filteredCount} 条
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="mobile-demo-large-empty">
+          <strong>暂无匹配名单</strong>
+          <span>请调整搜索关键词</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function NameListItemCard({ item, level }: { item: NameListRecord; level: MobileRiskBadgeLevel }) {
+  return (
+    <article className="mobile-demo-record-card mobile-demo-namelist-card">
+      <div className="mobile-demo-row-head">
+        <strong>{item.name}</strong>
+        <MobileRiskBadge level={level}>{item.reporter}</MobileRiskBadge>
+      </div>
+      <KeyValueList
+        rows={[
+          ['企业名称', item.name],
+          ['入库原因', item.reason],
+          ['上报公司', item.reporter],
+          ['入库日期', item.date],
+        ]}
+      />
+    </article>
+  );
+}
+
+function filterNameListItems(items: NameListRecord[], searchValue: string) {
+  const keyword = searchValue.trim().toLowerCase();
+
+  if (!keyword) {
+    return items;
+  }
+
+  return items.filter((item) => [item.name, item.reason, item.reporter, item.date].some((value) => value.toLowerCase().includes(keyword)));
+}
+
+function formatNameListVisibleStatus(totalCount: number, visibleCount: number) {
+  if (totalCount === 0) return '已显示 0 / 0';
+  if (visibleCount >= totalCount) return `已显示全部 ${totalCount} 条`;
+  return `已显示 1-${visibleCount} / ${totalCount}`;
 }
 
 function ControlStrategyList() {
@@ -1283,95 +1855,103 @@ function ControlStrategyList() {
   );
 }
 
-function NameListAccordions() {
-  const groups = [
-    { id: 'black', title: '黑名单 55 个', records: blackListItems, level: 'danger' as const },
-    { id: 'grey', title: '灰名单 70 个', records: greyListItems, level: 'warning' as const },
-    { id: 'white', title: '白名单* 30 个', records: whiteListItems, level: 'normal' as const },
-  ];
-
-  return (
-    <MobileAccordion
-      items={groups.map((group) => ({
-        id: group.id,
-        title: group.title,
-        children: (
-          <div className="mobile-demo-record-list">
-            {group.records.map((record) => (
-              <article className="mobile-demo-record-card" key={`${record.name}-${record.date}`}>
-                <div className="mobile-demo-row-head">
-                  <strong>{record.name}</strong>
-                  <MobileRiskBadge level={group.level}>{record.reporter}</MobileRiskBadge>
-                </div>
-                <p>{record.reason}</p>
-                <span>{record.date}</span>
-              </article>
-            ))}
-          </div>
-        ),
-      }))}
-    />
-  );
-}
-
 function InternalRatingCards() {
-  return (
-    <div className="mobile-demo-record-list">
-      {internalAnnualRatingRecords.map((item) => (
-        <article className="mobile-demo-record-card" key={item.company}>
-          <strong>{item.company}</strong>
-          <KeyValueList
-            rows={[
-              ['有效评级', item.rating],
-              ['评级年报年份', String(item.reportYear)],
-            ]}
-          />
-        </article>
-      ))}
-    </div>
-  );
+  return <CompactInternalRatingCards />;
 }
 
 function CompactInternalRatingCards() {
   return (
     <div className="mobile-demo-rating-company-list">
       {internalAnnualRatingRecords.map((item) => (
-        <article className="mobile-demo-rating-company-card" key={item.company}>
-          <strong>{item.company}</strong>
-          <div>
-            <span>
-              有效评级
-              <b>{item.rating}</b>
-            </span>
-            <span>
-              评级年报年份
-              <b>{item.reportYear}</b>
-            </span>
-          </div>
-        </article>
+        <RatingListCard
+          key={item.company}
+          title={item.company}
+          fields={[
+            { label: '有效评级', value: item.rating, emphasized: true },
+            { label: '年报年份', value: String(item.reportYear) },
+          ]}
+        />
       ))}
     </div>
   );
 }
 
 function ExternalRatingAccordions() {
+  const [openAgencies, setOpenAgencies] = useState<string[]>([]);
+  const toggleAgency = (agency: string) => {
+    setOpenAgencies((current) => (current.includes(agency) ? current.filter((item) => item !== agency) : [...current, agency]));
+  };
+
   return (
-    <MobileAccordion
-      items={externalRatingAgencies.map((agency) => ({
-        id: agency.agency,
-        title: `${agency.agency} ${agency.rating} / ${agency.date}`,
-        children: (
-          <div className="mobile-demo-record-list">
-            {agency.history.map((item) => (
-              <article className="mobile-demo-history-row" key={`${agency.agency}-${item.date}`}>
-                <span>{item.date}</span>
-                <strong>{item.rating}</strong>
-              </article>
-            ))}
-          </div>
-        ),
-      }))}
-    />
+    <div className="mobile-demo-rating-company-list">
+      {externalRatingAgencies.map((agency) => {
+        const isOpen = openAgencies.includes(agency.agency);
+
+        return (
+          <RatingListCard
+            key={agency.agency}
+            title={agency.agency}
+            fields={[
+              { label: '评级结果', value: agency.rating, emphasized: true },
+              { label: '评级日期', value: agency.date },
+            ]}
+            action={
+              <button
+                className={`mobile-demo-rating-card-toggle ${isOpen ? 'is-open' : ''}`.trim()}
+                type="button"
+                aria-label={`${agency.agency}历史评级`}
+                aria-expanded={isOpen}
+                onClick={() => toggleAgency(agency.agency)}
+              >
+                <ChevronDown size={16} />
+              </button>
+            }
+          >
+            {isOpen ? (
+              <div className="mobile-demo-rating-history-list">
+                <div className="mobile-demo-rating-history-title">历史评级</div>
+                {agency.history.map((item) => (
+                  <div className="mobile-demo-rating-history-row" key={`${agency.agency}-${item.date}`}>
+                    <span>{item.date}</span>
+                    <strong>{item.rating}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </RatingListCard>
+        );
+      })}
+    </div>
+  );
+}
+
+function RatingListCard({
+  title,
+  fields,
+  action,
+  children,
+}: {
+  title: string;
+  fields: Array<{ label: string; value: ReactNode; emphasized?: boolean }>;
+  action?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <article className="mobile-demo-rating-company-card">
+      <div className="mobile-demo-rating-card-head">
+        <strong>{title}</strong>
+        {action}
+      </div>
+      <div className="mobile-demo-rating-info-row">
+        {fields.map((field) => (
+          <span className="mobile-demo-rating-info-item" key={field.label}>
+            <em>{field.label}</em>
+            <b className={field.emphasized ? 'is-emphasized' : undefined}>{field.value}</b>
+          </span>
+        ))}
+      </div>
+      {children ? <div className="mobile-demo-rating-card-extra">{children}</div> : null}
+    </article>
   );
 }
 
@@ -1622,11 +2202,69 @@ function LargeCustomerFilterSummary({
   );
 }
 
+function LargeCustomerFullListSheet({
+  filterCount,
+  keyword,
+  sortLabel,
+  totalCount,
+  visibleCount,
+  rows,
+  hasMore,
+  nextCount,
+  onKeywordChange,
+  onOpenFilter,
+  onOpenSort,
+  onLoadMore,
+}: {
+  filterCount: number;
+  keyword: string;
+  sortLabel: string;
+  totalCount: number;
+  visibleCount: number;
+  rows: LargeCustomerRow[];
+  hasMore: boolean;
+  nextCount: number;
+  onKeywordChange: (keyword: string) => void;
+  onOpenFilter: () => void;
+  onOpenSort: () => void;
+  onLoadMore: () => void;
+}) {
+  return (
+    <section className="mobile-demo-large-full-list">
+      <LargeCustomerFilterSummary
+        filterCount={filterCount}
+        keyword={keyword}
+        sortLabel={sortLabel}
+        onKeywordChange={onKeywordChange}
+        onOpenFilter={onOpenFilter}
+        onOpenSort={onOpenSort}
+      />
+      <div className="mobile-demo-large-full-status">
+        <span>{formatLargeCustomerFullListStatus(totalCount, visibleCount)}</span>
+      </div>
+      <LargeCustomerCards rows={rows} />
+      {hasMore ? (
+        <button className="mobile-demo-large-load-more" type="button" onClick={onLoadMore}>
+          加载更多 {nextCount} 家
+          <ChevronDown size={16} />
+        </button>
+      ) : (
+        <button className="mobile-demo-large-load-more is-complete" type="button" disabled>
+          {totalCount > 0 ? `已显示全部 ${totalCount} 家` : '暂无可展示客户'}
+        </button>
+      )}
+    </section>
+  );
+}
+
 function LargeCustomerFilterTotalCard({ total }: { total: LargeCustomerTotal }) {
   return (
     <section className="mobile-demo-large-total-card" aria-label="当前筛选合计">
       <div className="mobile-demo-large-total-head">
         <strong>当前筛选合计</strong>
+        <span>
+          当前筛选 <b>{total.count}</b> 家
+        </span>
       </div>
       <div className="mobile-demo-large-total-grid">
         <LargeCustomerTotalMetric label="持仓规模" value={`${formatLargeCustomerAmount(total.exposure)} 亿元`} variant="primary" />
@@ -1815,7 +2453,12 @@ function LargeCustomerSortSheet({
 
 function LargeCustomerCards({ rows }: { rows: LargeCustomerRow[] }) {
   if (!rows.length) {
-    return <p className="mobile-demo-empty">暂无符合条件的大户客户</p>;
+    return (
+      <div className="mobile-demo-large-empty">
+        <strong>暂无匹配客户</strong>
+        <span>请调整筛选条件或搜索关键词</span>
+      </div>
+    );
   }
 
   return (
@@ -1876,58 +2519,66 @@ function HoldingDetails({ dimension, name }: { dimension: SingleHoldingView; nam
   }
 
   return (
-    <div className="mobile-demo-record-list">
-      {details.map((item) => (
-        <article className="mobile-demo-record-card" key={`${item.legalEntity}-${item.productName}`}>
-          <strong>{item.legalEntity}</strong>
-          <KeyValueList
-            rows={[
-              ['专业公司', item.memberCompany],
-              ['资产类型', 'assetType' in item && typeof item.assetType === 'string' ? item.assetType : name],
-              ['证券/产品名称', item.productName],
-              ['起息日', item.startDate],
-              ['到期日', item.endDate],
-              ['持仓规模', `${item.amount} 亿元`],
-            ]}
-          />
-        </article>
-      ))}
+    <div className="mobile-demo-holding-record-list">
+      {details.map((item, index) => {
+        const assetType = 'assetType' in item && typeof item.assetType === 'string' ? item.assetType : name;
+
+        return (
+          <article className="mobile-demo-holding-record-card" key={`${item.legalEntity}-${item.productName}-${index}`}>
+            <strong className="mobile-demo-holding-record-entity">{item.legalEntity}</strong>
+            <div className="mobile-demo-holding-record-metric">
+              <span className={`mobile-demo-holding-asset-badge ${holdingAssetBadgeClass(assetType)}`.trim()}>{assetType}</span>
+              <b>
+                {formatHoldingAmount(item.amount)}
+                <em>亿元</em>
+              </b>
+            </div>
+            <p>{item.productName}</p>
+            <span className="mobile-demo-holding-record-date">{item.startDate} → {item.endDate}</span>
+          </article>
+        );
+      })}
     </div>
   );
 }
 
 function SingleWarningDrilldownAccordion() {
   return (
-    <MobileAccordion
-      items={singleLargeWarningDrilldown.map((risk) => ({
-        id: risk.key,
-        title: `${risk.label} ${risk.amount} 亿元`,
-        children: (
-          <div className="mobile-demo-record-list">
-            {risk.members.map((member) => (
-              <article className="mobile-demo-record-card" key={`${risk.key}-${member.name}`}>
-                <div className="mobile-demo-row-head">
-                  <strong>{member.name}</strong>
-                  <span>{member.amount} 亿元</span>
-                </div>
-                {member.subsidiaries.map((item) => (
-                  <p key={`${member.name}-${item.name}`}>{item.name}：{item.amount} 亿元</p>
-                ))}
-              </article>
-            ))}
-          </div>
-        ),
-      }))}
-    />
-  );
-}
+    <div className="mobile-demo-warning-drilldown">
+      {singleLargeWarningDrilldown.map((risk, index) => {
+        const riskAmount = singleLargeCustomerWarningMetrics[risk.key];
 
-function SentimentDetail({ item }: { item: SentimentFeedItem }) {
-  return (
-    <div className="mobile-demo-sheet-copy">
-      <MobileRiskBadge level={item.level === 'high' ? 'danger' : 'warning'}>{item.level === 'high' ? '高风险' : '中风险'}</MobileRiskBadge>
-      <KeyValueList rows={[['客户名称', item.customer], ['更新日期', item.date]]} />
-      <p>{item.body}</p>
+        return (
+          <details className={`mobile-demo-warning-drilldown-card risk-${risk.key}`.trim()} key={risk.key} open={index === 0}>
+            <summary>
+              <span>
+                <i className={`mobile-demo-risk-dot risk-${risk.key}`} />
+                <strong>{risk.label}</strong>
+              </span>
+              <em>{formatRiskNumber(riskAmount)} 亿元</em>
+              <ChevronDown className="mobile-demo-accordion-chevron" size={18} />
+            </summary>
+            <div className="mobile-demo-warning-drilldown-body">
+              {risk.members.map((member) => (
+                <section className="mobile-demo-warning-drilldown-member" key={`${risk.key}-${member.name}`}>
+                  <div className="mobile-demo-row-head">
+                    <strong>{member.name}</strong>
+                    <span>{formatRiskNumber(member.amount)} 亿元</span>
+                  </div>
+                  <div className="mobile-demo-subsidiary-list">
+                    {member.subsidiaries.map((item) => (
+                      <div className="mobile-demo-subsidiary-row" key={`${member.name}-${item.name}`}>
+                        <span>{item.name}</span>
+                        <strong>{formatRiskNumber(item.amount)} 亿元</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -2017,10 +2668,33 @@ function largeCustomerSortDescription(sort: LargeCustomerSort) {
   return `当前按「${largeCustomerSortLabel(sort.field)}」${sort.direction === 'desc' ? '从高到低' : '从低到高'}展示`;
 }
 
-function formatLargeCustomerListStatus(totalCount: number, visibleCount: number) {
+function formatLargeCustomerPreviewStatus(totalCount: number, visibleCount: number) {
   if (totalCount === 0) return '当前筛选 0 家';
-  if (visibleCount >= totalCount) return `当前筛选 ${totalCount} 家，已全部展示`;
-  return `当前筛选 ${totalCount} 家，已展示 ${visibleCount} 家`;
+  if (totalCount <= mainLargeCustomerPreviewCount) return `当前筛选 ${totalCount} 家，已全部展示`;
+  return `当前筛选 ${totalCount} 家，当前展示前 ${visibleCount} 家`;
+}
+
+function formatLargeCustomerFullListStatus(totalCount: number, visibleCount: number) {
+  if (totalCount === 0) return '当前筛选 0 家';
+  if (visibleCount >= totalCount) return `当前筛选 ${totalCount} 家，已显示全部 ${totalCount} 家`;
+  return `当前筛选 ${totalCount} 家，已显示 1-${visibleCount} / ${totalCount}`;
+}
+
+function formatHoldingAmount(value: number) {
+  return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseHoldingRatio(ratio: string) {
+  const parsedRatio = Number.parseFloat(ratio.replace('%', ''));
+  return Number.isFinite(parsedRatio) ? parsedRatio : 0;
+}
+
+function holdingAssetBadgeClass(assetType: string) {
+  if (assetType.includes('非标')) return 'is-nonstandard';
+  if (assetType.includes('债券')) return 'is-bond';
+  if (assetType.includes('股票')) return 'is-stock';
+  if (assetType.includes('基金')) return 'is-fund';
+  return 'is-other';
 }
 
 function formatLargeCustomerAmount(value: number) {
