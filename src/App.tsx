@@ -1,5 +1,5 @@
 import { Fragment, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Bot,
   CalendarDays,
@@ -110,18 +110,19 @@ type NameListItem = {
 
 function App() {
   const location = useLocation();
-  const isMobileDemoRoute = location.pathname === '/mobile-demo' || window.location.pathname === '/mobile-demo';
+  const navigate = useNavigate();
+  const isMobileDemoRoute = location.pathname === '/mobile-demo';
 
   const handleViewModeChange = (nextViewMode: ViewMode) => {
     if (nextViewMode === 'mobile') {
       if (!isMobileDemoRoute) {
-        window.location.assign('/mobile-demo');
+        navigate('/mobile-demo');
       }
       return;
     }
 
-    if (isMobileDemoRoute || window.location.pathname !== '/') {
-      window.location.assign('/');
+    if (isMobileDemoRoute) {
+      navigate('/');
     }
   };
 
