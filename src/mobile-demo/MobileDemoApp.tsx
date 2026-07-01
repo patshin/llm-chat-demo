@@ -668,7 +668,7 @@ function WarningVankeDrilldownModule() {
 
   return (
     <>
-      <MobileSummaryCard conclusion={`${vankeWarningInsuranceSummary.groupName}当前风险金额合计 ${vankeWarningInsuranceSummary.exposure} 亿元，其中重大预警金额 ${vankeWarningInsuranceSummary.majorWarningAmount} 亿元、二级预警金额 ${vankeWarningInsuranceSummary.secondLevelWarningAmount} 亿元、一级预警金额 ${vankeWarningInsuranceSummary.firstLevelWarningAmount} 亿元、出险金额 ${vankeWarningInsuranceSummary.defaultAmount} 亿元。风险主要集中在寿险、银行和信托等成员公司，建议优先查看出险金额和重大预警金额明细。`} />
+      <MobileSummaryCard conclusion={`${vankeWarningInsuranceSummary.groupName}当前存在多类预警及出险记录，集团总体持仓余额为 ${vankeWarningInsuranceSummary.exposure} 亿元，其中重大预警金额 ${vankeWarningInsuranceSummary.majorWarningAmount} 亿元、二级预警金额 ${vankeWarningInsuranceSummary.secondLevelWarningAmount} 亿元、一级预警金额 ${vankeWarningInsuranceSummary.firstLevelWarningAmount} 亿元、出险金额 ${vankeWarningInsuranceSummary.defaultAmount} 亿元。风险主要集中在银行、寿险和信托，建议限制新增交易并跟踪处置进展。`} />
       <MetricGrid
         metrics={[
           { label: '重大预警金额', value: String(vankeWarningInsuranceSummary.majorWarningAmount), unit: '亿元' },
