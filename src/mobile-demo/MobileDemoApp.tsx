@@ -5,6 +5,7 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight,
+  CircleQuestionMark,
   ClipboardList,
   Filter,
   Layers3,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   Star,
   UserRoundCheck,
+  WalletCards,
 } from 'lucide-react';
 import {
   MobileBottomSheet,
@@ -56,6 +58,7 @@ import {
   singleLargeCustomerSentimentFeed,
   singleLargeCustomerWarningCompanyDistribution,
   singleLargeCustomerWarningMetrics,
+  singleLargeCustomerWarningTrend,
   vankeConcentrationTrendRows,
   singleLargeMetrics,
   singleLargeWarningDrilldown,
@@ -95,7 +98,7 @@ type SortDirection = 'asc' | 'desc';
 type SingleLargeTab = 'holding' | 'warning' | 'rating' | 'sentiment' | 'namelist';
 type SingleHoldingView = 'company' | 'asset';
 type SingleHoldingDisplayView = 'distribution' | 'details';
-type SingleWarningView = 'summary' | 'member' | 'drilldown';
+type SingleWarningView = 'trend' | 'dimension' | 'drilldown';
 type SheetState = { title: string; content: ReactNode } | null;
 type LargeCustomerFilters = {
   keyword: string;
@@ -130,6 +133,12 @@ type VankeRiskProjectSheet = {
   memberName: string;
   amount: number;
   records: MobileVankeRiskProjectDetail[];
+};
+type SingleWarningProjectSheet = {
+  riskLabel: string;
+  memberName: string;
+  amount: number;
+  records: ReadonlyArray<MobileVankeRiskProjectDetail>;
 };
 
 type Metric = {
@@ -215,7 +224,7 @@ const moduleCards: Array<{
   },
   {
     key: 'namelistOverview',
-    title: '黑灰白名单整体查询',
+    title: '集团整体黑灰白名单查询',
     summary: '集团名单库按黑名单、灰名单、白名单*展示整体统计与详情入口。',
     keyNumber: '155',
     keyLabel: '名单库主体总数（个）',
@@ -263,7 +272,7 @@ const moduleCards: Array<{
   },
   {
     key: 'singleLarge',
-    title: '单一大户查询',
+    title: '单一大户（交易对手）查询',
     summary: '万科企业集团当前为重点管理大户，整体持仓规模 285.53 亿元。',
     keyNumber: '285.53',
     keyLabel: '总持仓规模（亿元）',
@@ -271,57 +280,56 @@ const moduleCards: Array<{
   },
 ];
 
+const defaultMobileModule: ModuleKey = 'singleLarge';
+
 function MobileDemoApp() {
-  const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
+  const [activeModule, setActiveModule] = useState<ModuleKey>(defaultMobileModule);
 
-  if (!activeModule) {
-    return <MobileHome onOpenModule={setActiveModule} />;
-  }
-
-  return <MobileModuleScreen moduleKey={activeModule} onBack={() => setActiveModule(null)} />;
+  return <MobileModuleScreen moduleKey={activeModule} onModuleChange={setActiveModule} />;
 }
 
-function MobileHome({ onOpenModule }: { onOpenModule: (moduleKey: ModuleKey) => void }) {
-  return (
-    <MobileShell
-      header={<MobileHeader title="智能风控助手 Mobile Demo" subtitle="桌面版数据重排，不新增业务数字" showBack={false} />}
-      stickyInput={<MobileStickyInput disabled placeholder="请输入您的问题，或选择模块查看" />}
-      ariaLabel="智能风控助手 Mobile Demo 首页"
-    >
-      <MobileSummaryCard conclusion="基于当前桌面版企业内部风险管理 demo，按移动端 390px 宽度重排展示。" />
-      <section className="mobile-demo-module-list" aria-label="模块入口">
-        {moduleCards.map((item) => (
-          <button
-            className="mobile-demo-module-card"
-            key={item.key}
-            type="button"
-            data-testid={`mobile-module-${item.key}`}
-            onClick={() => onOpenModule(item.key)}
-          >
-            <span className="mobile-demo-module-icon">{item.icon}</span>
-            <span className="mobile-demo-module-copy">
-              <strong>{item.title}</strong>
-              <em>{item.summary}</em>
-            </span>
-            <span className="mobile-demo-module-number">
-              <strong>{item.keyNumber}</strong>
-              <em>{item.keyLabel}</em>
-            </span>
-            <ChevronRight size={18} />
-          </button>
-        ))}
-      </section>
-    </MobileShell>
-  );
-}
-
-function MobileModuleScreen({ moduleKey, onBack }: { moduleKey: ModuleKey; onBack: () => void }) {
+function MobileModuleScreen({
+  moduleKey,
+  onModuleChange,
+}: {
+  moduleKey: ModuleKey;
+  onModuleChange: (moduleKey: ModuleKey) => void;
+}) {
   const moduleInfo = moduleCards.find((item) => item.key === moduleKey);
   const [sheet, setSheet] = useState<SheetState>(null);
+  const [sceneSwitcherOpen, setSceneSwitcherOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [moduleKey]);
+
+  const openSceneSwitcher = () => {
+    setSheet(null);
+    setSceneSwitcherOpen(true);
+  };
+
+  const selectScene = (nextModuleKey: ModuleKey) => {
+    onModuleChange(nextModuleKey);
+    setSceneSwitcherOpen(false);
+    setSheet(null);
+  };
 
   return (
     <MobileShell
-      header={<MobileHeader title={moduleInfo?.title ?? '暂无数据'} subtitle={moduleInfo?.subtitle ?? '移动端重排版'} onBack={onBack} />}
+      header={
+        <MobileHeader
+          title={moduleInfo?.title ?? '暂无数据'}
+          subtitle={moduleInfo?.subtitle ?? '移动端重排版'}
+          showBack={false}
+          rightSlot={
+            <button className="mobile-demo-scene-trigger" type="button" onClick={openSceneSwitcher}>
+              <ListChecks size={15} />
+              <span>场景</span>
+              <ChevronDown size={14} />
+            </button>
+          }
+        />
+      }
       stickyInput={<MobileStickyInput disabled placeholder="继续追问当前风险情况" />}
       ariaLabel={`${moduleInfo?.title ?? '移动端模块'}页面`}
     >
@@ -335,10 +343,41 @@ function MobileModuleScreen({ moduleKey, onBack }: { moduleKey: ModuleKey; onBac
       {moduleKey === 'warningVankeDrilldown' && <WarningVankeDrilldownModule />}
       {moduleKey === 'large' && <LargeCustomerModule />}
       {moduleKey === 'singleLarge' && <SingleLargeCustomerModule onOpenSheet={setSheet} />}
+      <MobileBottomSheet open={sceneSwitcherOpen} title="切换问答场景" onClose={() => setSceneSwitcherOpen(false)}>
+        <MobileSceneSwitcher activeModule={moduleKey} onSelect={selectScene} />
+      </MobileBottomSheet>
       <MobileBottomSheet open={Boolean(sheet)} title={sheet?.title ?? '详情'} onClose={() => setSheet(null)}>
         {sheet?.content}
       </MobileBottomSheet>
     </MobileShell>
+  );
+}
+
+function MobileSceneSwitcher({
+  activeModule,
+  onSelect,
+}: {
+  activeModule: ModuleKey;
+  onSelect: (moduleKey: ModuleKey) => void;
+}) {
+  return (
+    <div className="mobile-demo-scene-switcher" aria-label="问答场景列表">
+      {moduleCards.map((item) => {
+        const isActive = item.key === activeModule;
+
+        return (
+          <button
+            className={`mobile-demo-scene-option ${isActive ? 'is-active' : ''}`}
+            key={item.key}
+            type="button"
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => onSelect(item.key)}
+          >
+            <strong>{item.title}</strong>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -518,7 +557,7 @@ function NameListOverviewModule() {
 
   return (
     <>
-      <MobileSummaryCard conclusion={`当前万科集团名单客户共 ${total} 个，其中黑名单 ${blackCount} 个、灰名单 ${greyCount} 个、白名单* ${whiteCount} 个。黑名单客户主要集中在违约、负面舆情和经营承压场景；灰名单主要为观察类客户；白名单为当前可正常开展业务但仍需持续监控的客户。`} />
+      <MobileSummaryCard conclusion={`当前集团名单客户共 ${total} 个，其中黑名单 ${blackCount} 个、灰名单 ${greyCount} 个、白名单* ${whiteCount} 个。黑名单客户主要集中在违约、负面舆情和经营承压场景；灰名单主要为观察类客户；白名单为当前可正常开展业务但仍需持续监控的客户。`} />
       <MetricGrid
         metrics={[
           { label: '名单客户总量', value: String(total), unit: '个' },
@@ -865,53 +904,25 @@ function LargeCustomerModule() {
 
 function SingleLargeCustomerModule({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) => void }) {
   const [tab, setTab] = useState<SingleLargeTab>('holding');
-  const singleLargeMetricCards: Metric[] = [
-    {
-      label: singleLargeMetrics[0].title,
-      value: singleLargeMetrics[0].value,
-      unit: singleLargeMetrics[0].unit,
-      assist: [singleLargeMetrics[0].change, singleLargeMetrics[0].subChange].filter(Boolean).join('\n'),
-    },
-    {
-      label: singleLargeMetrics[1].title,
-      value: singleLargeMetrics[1].value,
-      unit: singleLargeMetrics[1].unit,
-      assist: singleLargeMetrics[1].change,
-    },
-    {
-      label: singleLargeMetrics[2].title,
-      value: singleLargeMetrics[2].value,
-      unit: singleLargeMetrics[2].unit,
-      assist: `含出险金额 ${formatRiskNumber(singleLargeCustomerWarningMetrics.defaulted)}亿元`,
-    },
-    {
-      label: '黑灰名单命中',
-      value: singleLargeMetrics[3].value,
-      unit: singleLargeMetrics[3].unit,
-      assist: singleLargeMetrics[3].change,
-    },
-    {
-      label: singleLargeMetrics[4].title,
-      value: singleLargeMetrics[4].value,
-      unit: singleLargeMetrics[4].unit,
-      assist: singleLargeMetrics[4].change,
-    },
-  ];
+  const singleLargeSummary = [
+    `万科企业集团当前为重点管理大户，整体持仓规模为 ${singleLargeMetrics[0].value} ${singleLargeMetrics[0].unit}，${singleLargeMetrics[0].change}，${singleLargeMetrics[0].subChange}。最大专业公司敞口为银行 ${singleLargeMetrics[1].value} ${singleLargeMetrics[1].unit}，占比 48.01%。`,
+    `出险预警金额为 ${singleLargeMetrics[2].value} ${singleLargeMetrics[2].unit}，其中出险金额 ${formatRiskNumber(singleLargeCustomerWarningMetrics.defaulted)} 亿元；黑灰名单命中情况为${singleLargeMetrics[3].value}${singleLargeMetrics[3].unit}、${singleLargeMetrics[3].change}；内部最新评级为 ${singleLargeMetrics[4].value}，评级日期 ${singleLargeMetrics[4].change}。`,
+    '建议持续关注持仓结构、预警出险变化、评级迁徙及负面舆情变化。（AI自由发挥）',
+  ].join('\n\n');
 
   return (
     <>
-      <MobileSummaryCard conclusion="万科企业集团当前为重点管理大户，整体持仓规模为 285.53 亿元，主要分布在银行、不动产和资产管理等专业公司；出险预警金额较高，评级存在一定承压迹象，并命中黑名单及灰名单记录。 建议持续关注持仓结构、预警出险变化、评级迁徙及负面舆情变化。" />
-      <SingleLargeMetricGrid metrics={singleLargeMetricCards} />
+      <MobileSummaryCard conclusion={singleLargeSummary} />
       <MobileSegmentedTabs
         className="mobile-demo-main-tabs"
-        ariaLabel="单一大户查询 tab"
+        ariaLabel="单一大户（交易对手）查询 tab"
         activeValue={tab}
         items={[
           { value: 'holding', label: '持仓' },
-          { value: 'warning', label: '出险' },
+          { value: 'warning', label: '预警出险' },
           { value: 'rating', label: '评级' },
-          { value: 'sentiment', label: '舆情' },
           { value: 'namelist', label: '黑灰名单' },
+          { value: 'sentiment', label: '舆情' },
         ]}
         onChange={setTab}
       />
@@ -933,10 +944,7 @@ function SingleHoldingPanel() {
   const [displayView, setDisplayView] = useState<SingleHoldingDisplayView>('distribution');
   const [expandedName, setExpandedName] = useState<string | null>(null);
   const rows = view === 'company' ? holdingMemberCompanyRows : holdingAssetTypeRows;
-  const distributionTitle = view === 'company' ? '成员公司持仓分布' : '资产类型持仓分布';
-  const distributionMeta = displayView === 'distribution'
-    ? '按持仓规模排序，展示金额与整体占比'
-    : '点击条目查看分法人公司和产品明细';
+  const distributionTitle = view === 'company' ? '成员公司分布（按持仓规模）' : '资产类型分布（按持仓规模）';
   const changeView = (nextView: SingleHoldingView) => {
     setView(nextView);
     setExpandedName(null);
@@ -950,75 +958,86 @@ function SingleHoldingPanel() {
   };
 
   return (
-    <MobileDataCard className="mobile-demo-holding-card" title="持仓规模总览">
-      <HoldingOverviewSummary />
-      <div className="mobile-demo-holding-controls">
-        <div className="mobile-demo-holding-control-layer">
-          <span className="mobile-demo-holding-control-label">分析维度</span>
-          <MobileSegmentedTabs
-            className="mobile-demo-holding-dimension-tabs"
-            ariaLabel="持仓规模维度"
-            activeValue={view}
-            items={[
-              { value: 'company', label: '成员公司' },
-              { value: 'asset', label: '资产类型' },
-            ]}
-            onChange={changeView}
-          />
+    <>
+      <MobileDataCard className="mobile-demo-holding-overview-card">
+        <HoldingOverviewSummary />
+      </MobileDataCard>
+      <MobileDataCard className="mobile-demo-holding-card mobile-demo-holding-analysis-card">
+        <div className="mobile-demo-holding-controls">
+          <div className="mobile-demo-holding-control-layer">
+            <span className="mobile-demo-holding-control-label">分析维度</span>
+            <MobileSegmentedTabs
+              className="mobile-demo-holding-dimension-tabs"
+              ariaLabel="持仓规模维度"
+              activeValue={view}
+              items={[
+                { value: 'company', label: '成员公司' },
+                { value: 'asset', label: '资产类型' },
+              ]}
+              onChange={changeView}
+            />
+          </div>
+          <div className="mobile-demo-holding-control-layer">
+            <span className="mobile-demo-holding-control-label">展示方式</span>
+            <MobileSegmentedTabs
+              className="mobile-demo-holding-display-tabs"
+              ariaLabel="持仓展示方式"
+              activeValue={displayView}
+              items={[
+                { value: 'distribution', label: '分布概览' },
+                { value: 'details', label: '明细穿透' },
+              ]}
+              onChange={changeDisplayView}
+            />
+          </div>
         </div>
-        <div className="mobile-demo-holding-control-layer">
-          <span className="mobile-demo-holding-control-label">展示方式</span>
-          <MobileSegmentedTabs
-            className="mobile-demo-holding-display-tabs"
-            ariaLabel="持仓展示方式"
-            activeValue={displayView}
-            items={[
-              { value: 'distribution', label: '分布概览' },
-              { value: 'details', label: '明细穿透' },
-            ]}
-            onChange={changeDisplayView}
-          />
+        <div className="mobile-demo-holding-analysis">
+          <div className="mobile-demo-holding-analysis-head">
+            <h3>{distributionTitle}</h3>
+          </div>
+          {displayView === 'distribution' ? (
+            <HoldingDistributionList rows={rows} />
+          ) : (
+            <HoldingDetailAccordion
+              rows={rows}
+              dimension={view}
+              expandedName={expandedName}
+              onToggle={toggleExpandedName}
+            />
+          )}
         </div>
-      </div>
-      <div className="mobile-demo-holding-analysis">
-        <div className="mobile-demo-holding-analysis-head">
-          <h3>{distributionTitle}</h3>
-          <p>{distributionMeta}</p>
-        </div>
-        {displayView === 'distribution' ? (
-          <HoldingDistributionList rows={rows} />
-        ) : (
-          <HoldingDetailAccordion
-            rows={rows}
-            dimension={view}
-            expandedName={expandedName}
-            onToggle={toggleExpandedName}
-          />
-        )}
-      </div>
-    </MobileDataCard>
+      </MobileDataCard>
+    </>
   );
 }
 
 function HoldingOverviewSummary() {
   const totalMetric = singleLargeMetrics[0];
-  const topCompany = holdingMemberCompanyRows[0];
-  const topAsset = holdingAssetTypeRows[0];
-  const overviewItems = [
-    { label: '总持仓规模', value: totalMetric.value, suffix: totalMetric.unit },
-    { label: '最大成员公司', value: topCompany.name, suffix: `${formatHoldingAmount(topCompany.amount)} 亿元` },
-    { label: '最大资产类型', value: topAsset.name, suffix: `${formatHoldingAmount(topAsset.amount)} 亿元` },
-  ];
+  const monthChange = totalMetric.change.match(/[+-]\d+(?:\.\d+)?/)?.[0] ?? '+12.80';
+  const yearStartChange = '+35.60';
 
   return (
-    <div className="mobile-demo-holding-overview-grid" aria-label="持仓规模总览指标">
-      {overviewItems.map((item) => (
-        <div className="mobile-demo-holding-overview-item" key={item.label}>
-          <span>{item.label}</span>
-          <strong>{item.value}</strong>
-          <em>{item.suffix}</em>
-        </div>
-      ))}
+    <div className="mobile-demo-holding-overview-hero" aria-label="持仓规模总览">
+      <div className="mobile-demo-holding-overview-title">
+        <span aria-hidden="true">
+          <WalletCards size={17} />
+        </span>
+        <h2>持仓规模总览</h2>
+      </div>
+      <span className="mobile-demo-holding-overview-label">总持仓规模</span>
+      <div className="mobile-demo-holding-overview-value">
+        <strong>{totalMetric.value}</strong>
+        <em>{totalMetric.unit}</em>
+      </div>
+      <div className="mobile-demo-holding-overview-changes">
+        <span>
+          较上月 <b>{monthChange}</b> 亿元
+        </span>
+        <i aria-hidden="true" />
+        <span>
+          较年初 <b>{yearStartChange}</b> 亿元
+        </span>
+      </div>
     </div>
   );
 }
@@ -1036,13 +1055,13 @@ function HoldingDistributionList({ rows }: { rows: HoldingDistributionRow[] }) {
               <span className="mobile-demo-holding-rank-name">
                 <i className={`mobile-demo-holding-rank-dot ${index < 3 ? 'is-top-three' : ''}`.trim()}>{index + 1}</i>
                 <strong>{item.name}</strong>
+                <span className="mobile-demo-holding-ratio-chip">占比 {item.ratio}</span>
               </span>
               <span className="mobile-demo-holding-amount">
                 <strong>{formatHoldingAmount(item.amount)}</strong>
                 <em>亿元</em>
               </span>
             </div>
-            <span className="mobile-demo-holding-ratio-chip">占整体 {item.ratio}</span>
             <div className="mobile-demo-holding-progress" aria-hidden="true">
               <i style={{ width: `${width}%` }} />
             </div>
@@ -1079,7 +1098,7 @@ function HoldingDetailAccordion({
             >
               <span className="mobile-demo-holding-detail-left">
                 <strong>{item.name}</strong>
-                <em>占整体 {item.ratio}</em>
+                <em>占比 {item.ratio}</em>
               </span>
               <span className="mobile-demo-holding-detail-right">
                 <strong>{formatHoldingAmount(item.amount)}</strong>
@@ -1100,37 +1119,55 @@ function HoldingDetailAccordion({
 }
 
 function SingleWarningPanel() {
-  const [view, setView] = useState<SingleWarningView>('summary');
+  const [view, setView] = useState<SingleWarningView>('trend');
+  const [projectSheet, setProjectSheet] = useState<SingleWarningProjectSheet | null>(null);
+  const warningSummaryMetrics = currentWarningSummaryRows.map((item) => ({
+    label: item.label,
+    value: String(singleLargeCustomerWarningMetrics[item.valueKey]),
+    unit: '亿元',
+  }));
+  const singleWarningTrendRows = singleLargeCustomerWarningTrend
+    .slice(-6)
+    .reverse()
+    .map((item) => ({ label: item.month, ...item }));
+  const singleWarningDimensionRows = singleLargeCustomerWarningCompanyDistribution.map((item) => ({
+    label: item.company,
+    ...item,
+  }));
+  const singleWarningDimensionTotal = singleWarningDimensionRows.reduce((sum, item) => sum + item.total, 0);
 
   return (
-    <MobileDataCard title="单一大户出险预警" meta="出险、重大预警、二级预警按集团和成员公司口径展示">
+    <>
+      <MetricMiniGrid metrics={warningSummaryMetrics} />
       <MobileSegmentedTabs
         ariaLabel="单一大户预警视图"
         activeValue={view}
         items={[
-          { value: 'summary', label: '汇总' },
-          { value: 'member', label: '成员公司' },
-          { value: 'drilldown', label: '穿透' },
+          { value: 'trend', label: '趋势分析' },
+          { value: 'dimension', label: '维度分析' },
+          { value: 'drilldown', label: '金额穿透' },
         ]}
         onChange={setView}
       />
-      {view === 'summary' && (
-        <>
-          <MetricMiniGrid
-            metrics={currentWarningSummaryRows.map((item) => ({
-              label: item.label,
-              value: String(singleLargeCustomerWarningMetrics[item.valueKey]),
-              unit: '亿元',
-            }))}
-          />
-          <RiskAmountRows rows={[{ label: '万科企业集团', ...singleLargeCustomerWarningMetrics }]} />
-        </>
+      {view === 'trend' && (
+        <MobileDataCard title="趋势分析" meta="近 6 个月，单位：亿元" action={<WarningRiskLegend />}>
+          <WarningTrendCompactChart rows={singleWarningTrendRows} />
+        </MobileDataCard>
       )}
-      {view === 'member' && (
-        <RiskAmountRows rows={singleLargeCustomerWarningCompanyDistribution.map((item) => ({ label: item.company, ...item }))} />
+      {view === 'dimension' && (
+        <MobileDataCard title="维度分析" meta="成员公司风险分布，单位：亿元">
+          <WarningDimensionRiskList rows={singleWarningDimensionRows} overallTotal={singleWarningDimensionTotal} />
+        </MobileDataCard>
       )}
-      {view === 'drilldown' && <SingleWarningDrilldownAccordion />}
-    </MobileDataCard>
+      {view === 'drilldown' && <SingleWarningDrilldownAccordion onOpenMember={setProjectSheet} />}
+      <MobileBottomSheet
+        open={Boolean(projectSheet)}
+        title={projectSheet ? `${projectSheet.memberName} - ${projectSheet.riskLabel}明细` : '项目明细'}
+        onClose={() => setProjectSheet(null)}
+      >
+        {projectSheet ? <SingleWarningProjectSheetContent sheet={projectSheet} /> : null}
+      </MobileBottomSheet>
+    </>
   );
 }
 
@@ -1146,11 +1183,13 @@ function SingleRatingPanel({ onOpenSheet }: { onOpenSheet: (sheet: SheetState) =
       action={
         isInternalView ? null : (
           <button
-            className="mobile-demo-text-action"
+            className="mobile-demo-rating-help-action"
             type="button"
+            aria-label="评级含义"
+            title="评级含义"
             onClick={() => onOpenSheet({ title: externalRatingMeaning.title, content: <p className="mobile-demo-sheet-copy">{externalRatingMeaning.content}</p> })}
           >
-            评级含义
+            <CircleQuestionMark size={18} aria-hidden="true" />
           </button>
         )
       }
@@ -1175,7 +1214,7 @@ function SingleSentimentPanel() {
   const items = singleLargeCustomerSentimentFeed[level];
 
   return (
-    <MobileDataCard title="舆情信息流" meta="默认展示最新前 5 条，完整舆情进入弹层搜索和加载更多">
+    <MobileDataCard>
       <MobileSegmentedTabs
         ariaLabel="舆情风险等级"
         activeValue={level}
@@ -2604,16 +2643,20 @@ function HoldingDetails({ dimension, name }: { dimension: SingleHoldingView; nam
 
         return (
           <article className="mobile-demo-holding-record-card" key={`${item.legalEntity}-${item.productName}-${index}`}>
-            <strong className="mobile-demo-holding-record-entity">{item.legalEntity}</strong>
-            <div className="mobile-demo-holding-record-metric">
-              <span className={`mobile-demo-holding-asset-badge ${holdingAssetBadgeClass(assetType)}`.trim()}>{assetType}</span>
-              <b>
+            <div className="mobile-demo-holding-record-head">
+              <span className="mobile-demo-holding-record-title">
+                <strong className="mobile-demo-holding-record-entity">{item.legalEntity}</strong>
+                <span className={`mobile-demo-holding-asset-badge ${holdingAssetBadgeClass(assetType)}`.trim()}>{assetType}</span>
+              </span>
+              <b className="mobile-demo-holding-record-amount">
                 {formatHoldingAmount(item.amount)}
                 <em>亿元</em>
               </b>
             </div>
             <p>{item.productName}</p>
-            <span className="mobile-demo-holding-record-date">{item.startDate} → {item.endDate}</span>
+            <span className="mobile-demo-holding-record-date">
+              起息日 {item.startDate} 到期日 {item.endDate}
+            </span>
           </article>
         );
       })}
@@ -2621,12 +2664,10 @@ function HoldingDetails({ dimension, name }: { dimension: SingleHoldingView; nam
   );
 }
 
-function SingleWarningDrilldownAccordion() {
+function SingleWarningDrilldownAccordion({ onOpenMember }: { onOpenMember: (sheet: SingleWarningProjectSheet) => void }) {
   return (
     <div className="mobile-demo-warning-drilldown">
       {singleLargeWarningDrilldown.map((risk, index) => {
-        const riskAmount = singleLargeCustomerWarningMetrics[risk.key];
-
         return (
           <details className={`mobile-demo-warning-drilldown-card risk-${risk.key}`.trim()} key={risk.key} open={index === 0}>
             <summary>
@@ -2634,30 +2675,77 @@ function SingleWarningDrilldownAccordion() {
                 <i className={`mobile-demo-risk-dot risk-${risk.key}`} />
                 <strong>{risk.label}</strong>
               </span>
-              <em>{formatRiskNumber(riskAmount)} 亿元</em>
+              <em>{formatRiskNumber(risk.amount)} 亿元</em>
               <ChevronDown className="mobile-demo-accordion-chevron" size={18} />
             </summary>
             <div className="mobile-demo-warning-drilldown-body">
+              <p className="mobile-demo-warning-drilldown-section-title">平安成员公司分布（合计 {formatRiskNumber(risk.amount)} 亿元）</p>
               {risk.members.map((member) => (
-                <section className="mobile-demo-warning-drilldown-member" key={`${risk.key}-${member.name}`}>
-                  <div className="mobile-demo-row-head">
+                <button
+                  className="mobile-demo-warning-member-row"
+                  key={`${risk.key}-${member.name}`}
+                  type="button"
+                  onClick={() => {
+                    onOpenMember({
+                      riskLabel: risk.label,
+                      memberName: member.name,
+                      amount: member.amount,
+                      records: member.details,
+                    });
+                  }}
+                >
+                  <span className="mobile-demo-warning-member-main">
                     <strong>{member.name}</strong>
-                    <span>{formatRiskNumber(member.amount)} 亿元</span>
-                  </div>
-                  <div className="mobile-demo-subsidiary-list">
-                    {member.subsidiaries.map((item) => (
-                      <div className="mobile-demo-subsidiary-row" key={`${member.name}-${item.name}`}>
-                        <span>{item.name}</span>
-                        <strong>{formatRiskNumber(item.amount)} 亿元</strong>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                    <em>{member.details.length} 条项目明细</em>
+                  </span>
+                  <span className="mobile-demo-warning-member-action">
+                    <strong>{formatRiskNumber(member.amount)} 亿元</strong>
+                    <ChevronRight size={16} />
+                  </span>
+                </button>
               ))}
             </div>
           </details>
         );
       })}
+    </div>
+  );
+}
+
+function SingleWarningProjectSheetContent({ sheet }: { sheet: SingleWarningProjectSheet }) {
+  return (
+    <div className="mobile-demo-vanke-project-sheet mobile-demo-single-warning-project-sheet">
+      <p className="mobile-demo-vanke-project-sheet-subtitle">
+        共 {sheet.records.length} 条，合计 {formatRiskNumber(sheet.amount)} 亿元
+      </p>
+      <div className="mobile-demo-vanke-project-list">
+        {sheet.records.map((record) => (
+          <article className="mobile-demo-vanke-project-card" key={`${sheet.riskLabel}-${sheet.memberName}-${record.company}-${record.projectName}`}>
+            <div className="mobile-demo-vanke-project-head">
+              <strong>{record.company}</strong>
+              <b>{formatRiskNumber(record.amount)} 亿元</b>
+            </div>
+            <div className="mobile-demo-single-project-field">
+              <span>项目名称</span>
+              <strong>{record.projectName}</strong>
+            </div>
+            <div className="mobile-demo-vanke-project-date">
+              <span>预警发起时间</span>
+              <strong>{record.warningStartDate}</strong>
+            </div>
+            <div className="mobile-demo-vanke-project-fields">
+              <span>
+                <em>成员公司</em>
+                <strong>{record.memberCompany}</strong>
+              </span>
+              <span>
+                <em>业务类型</em>
+                <strong className="mobile-demo-business-type-badge">{record.businessType}</strong>
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

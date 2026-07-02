@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export interface MobileDataCardProps {
-  title: string;
+  title?: string;
   meta?: string;
   action?: ReactNode;
   children?: ReactNode;
@@ -19,16 +19,20 @@ export function MobileDataCard({
   emptyText = '暂无数据',
   className = '',
 }: MobileDataCardProps) {
+  const hasHeader = Boolean(title || meta || action);
+
   return (
     <section className={`mobile-demo-card ${className}`.trim()}>
       <div className="mobile-demo-card-inner">
-        <div className="mobile-demo-card-header">
-          <div>
-            <h2 className="mobile-demo-card-title">{title || '暂无数据'}</h2>
-            {meta ? <p className="mobile-demo-card-meta">{meta}</p> : null}
+        {hasHeader ? (
+          <div className="mobile-demo-card-header">
+            <div>
+              {title ? <h2 className="mobile-demo-card-title">{title}</h2> : null}
+              {meta ? <p className="mobile-demo-card-meta">{meta}</p> : null}
+            </div>
+            {action}
           </div>
-          {action}
-        </div>
+        ) : null}
         {empty ? <p className="mobile-demo-empty">{emptyText}</p> : children}
       </div>
     </section>
@@ -36,4 +40,3 @@ export function MobileDataCard({
 }
 
 export default MobileDataCard;
-
